@@ -1,7 +1,9 @@
 import asyncio
+import numpy as np
 import os
 
 from pyftg.socket.aio.gateway import Gateway
+import MotionClasses.MotionEditor as me
 
 import constants as c
 import functions as f
@@ -31,7 +33,7 @@ common_commands = [
     '--limithp',
     str(c.PLAYER_HP),
     str(c.PLAYER_HP),
-    '--slow',
+    # '--slow',
     '-df',
     '-r',
     '1',
@@ -44,39 +46,42 @@ common_commands = [
     # 'zen',
     # './custom_motions/zen.csv',
     # This is for the ai, so maybe turn on when you have those configured
-    # '--headless-mode',
-    # '--input-sync',
-    # '--lightweight-mode',
+    '--headless-mode',
+    '--input-sync',
+    '--lightweight-mode',
     '--pyftg-mode',
-    # '--non-delay',
+    '--non-delay',
     '2',
 ]
 
 print(f'Java jar command:{" ".join(common_commands)}')
 
-port: int | None = 61254
+# port: int | None = 61254
 
-gateway = Gateway(port=port)
+# gateway = Gateway(port=port)
 
 c.POLL_INTERVAL_SEC = 0
+experiment_name: str = f'runner_{f.get_current_time_str(delimiter='.')}'
 asyncio.run(
-    gateway.run_game(
-        ['test_mcts<name>ZEN', 'GARNET'],
-        [c.AgentNames.KAT_MCTS_AGENT, c.AgentNames.MCTS_AGENT],
-        1,
-    )
-    # f.start_simulators(
+    # gateway.run_game(
+    #     ['test_mcts<name>ZEN', 'GARNET'],
+    #     [c.AgentNames.KAT_MCTS_AGENT, c.AgentNames.MCTS_AGENT],
     #     1,
-    #     common_commands,
-    #     characters=np.array([
-    #         [c.CHARACTERS.ZEN.name, c.CHARACTERS.GARNET.name],
-    #         [c.CHARACTERS.ZEN.name, c.CHARACTERS.LUD.name],
-    #         [c.CHARACTERS.GARNET.name, c.CHARACTERS.LUD.name],
-    #     ], dtype=object),
-    #     motions=me.DEFAULT_MOTION_LIST,
-    #     agent_names=np.full(shape=(3, 2), fill_value=c.AgentNames.KAT_MCTS_AGENT),
-    #     experiment_name=f'runner_{f.get_current_time_str(delimiter='.')}',
-    #     # deterministic=deterministic, really dont care
-    #     extra_commands=None,
     # )
+    f.start_simulators(
+        15,
+        common_commands,
+        characters=np.array([
+            [c.CHARACTERS.ZEN.name, c.CHARACTERS.GARNET.name],
+            [c.CHARACTERS.ZEN.name, c.CHARACTERS.LUD.name],
+            [c.CHARACTERS.GARNET.name, c.CHARACTERS.LUD.name],
+        ], dtype=object),
+        motions=me.DEFAULT_MOTION_LIST,
+        agent_names=np.full(shape=(3, 2), fill_value=c.AgentNames.MCTS_AGENT),
+        experiment_name=experiment_name,
+        # deterministic=deterministic, really dont care
+        extra_commands=None,
+    )
+
 )
+f.consolidate_data(experiment_name)

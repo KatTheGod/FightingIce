@@ -303,7 +303,7 @@ def consolidate_data(
                     if log_group_name == c.LOGS.FRAME_DATA:
                         consolidated_file.write('[')
 
-                    for experiment_file in experiment_files:
+                    for experiment_file_index, experiment_file in enumerate(experiment_files):
                         if experiment_file.name == consolidated_file_name.name:
                             continue
 
@@ -326,7 +326,10 @@ def consolidate_data(
                                 shutil.copyfileobj(src_file, consolidated_file)
 
                         if log_group_name == c.LOGS.FRAME_DATA:
-                            consolidated_file.write('},\n')
+                            if experiment_file_index == len(experiment_files) - 1:
+                                consolidated_file.write('}\n')
+                            else:
+                                consolidated_file.write('},\n')
                         else:
                             consolidated_file.write('\n')
 

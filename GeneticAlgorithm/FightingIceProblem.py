@@ -4,6 +4,7 @@ import re
 import uuid
 from datetime import datetime
 from typing import Any
+import os
 
 import numpy as np
 from distributed import Client
@@ -85,7 +86,10 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> list[flo
 
     competitive_balance: float = f.transform_win_rate(average_win_rate)
 
-    return np.array([-uniqueness_reward, -competitive_balance], dtype=np.float64)
+    excitement = gf.calculate_excitement(settings.experiment_name)
+
+    # return np.array([-uniqueness_reward, -competitive_balance], dtype=np.float64)
+    return np.array([-excitement, 0], dtype=np.float64)
 
 
 class FightingIceProblem(Problem):
@@ -121,37 +125,54 @@ class FightingIceProblem(Problem):
 
         # For the first iteration, we are only going to increase the hit damage for stand a, and energy add for stand b
         # Remember this is for every character
+        # self.motion_adjustments: list[tuple[str, str]] = [
+        #     (motion_names.STAND_A, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.STAND_A, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.STAND_B, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.STAND_B, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.CROUCH_A, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.CROUCH_A, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.CROUCH_B, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.CROUCH_B, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.AIR_A, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.AIR_A, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.AIR_B, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.AIR_B, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.AIR_DA, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.AIR_DA, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.AIR_DB, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.AIR_DB, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.STAND_FA, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.STAND_FA, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.STAND_FB, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.STAND_FB, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.CROUCH_FA, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.CROUCH_FA, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.CROUCH_FB, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.CROUCH_FB, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.AIR_FA, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.AIR_FA, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.AIR_FB, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.AIR_FB, headers.ATTACK_GIVE_ENERGY),
+        #     (motion_names.AIR_UA, headers.ATTACK_HIT_ADD_ENERGY),
+        #     (motion_names.AIR_UA, headers.ATTACK_GIVE_ENERGY),
+        # ]
         self.motion_adjustments: list[tuple[str, str]] = [
-            (motion_names.STAND_A, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.STAND_A, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.STAND_B, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.STAND_B, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.CROUCH_A, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.CROUCH_A, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.CROUCH_B, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.CROUCH_B, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_A, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_A, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_B, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_B, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_DA, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_DA, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_DB, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_DB, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.STAND_FA, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.STAND_FA, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.STAND_FB, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.STAND_FB, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.CROUCH_FA, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.CROUCH_FA, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.CROUCH_FB, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.CROUCH_FB, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_FA, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_FA, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_FB, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_FB, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_UA, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_UA, headers.ATTACK_GIVE_ENERGY),
+            (motion_names.STAND_A, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.STAND_B, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.CROUCH_A, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.CROUCH_B, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.AIR_A, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.AIR_B, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.AIR_DA, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.AIR_DB, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.STAND_FA, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.STAND_FB, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.CROUCH_FA, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.CROUCH_FB, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.AIR_FA, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.AIR_FB, headers.ATTACK_HIT_DAMAGE),
+            (motion_names.AIR_UA, headers.ATTACK_HIT_DAMAGE),
         ]
 
         self.motion_coordinates: np.ndarray = gf.get_motion_coordinates(self.motion_adjustments)

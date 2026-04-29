@@ -1,9 +1,11 @@
 import asyncio
+import math
 import os
 import pathlib
 import time
 from datetime import datetime
 from itertools import combinations
+import json
 
 import numpy as np
 import pandas
@@ -13,6 +15,7 @@ import functions as f
 import MotionClasses.MotionEditor as me
 import MotionClasses.MotionHeaders as mh
 import MotionClasses.MotionNames as mn
+from GeneticAlgorithm.FrameData import parse_frame_data
 
 
 # According to research, its just euclid distance between objects
@@ -67,7 +70,6 @@ def constraint_novelty_search(
         if boolean_motions is None
         else boolean_motions.shape[1] * boolean_motions.shape[2]
     )
-
 
     return (
         f.calculate_harmonic_mean(
@@ -183,7 +185,7 @@ async def orchestrate_matches(
         '--limithp',
         str(c.PLAYER_HP),
         str(c.PLAYER_HP),
-        # '-df',
+        '-df',
         '-r',
         '1',
         '-f',
@@ -220,7 +222,7 @@ async def orchestrate_matches(
         extra_commands=argument_for_custom_motions,
     )
 
-    f.consolidate_data(experiment_name, log_list=[c.LOGS.POINT])
+    f.consolidate_data(experiment_name, log_list=[c.LOGS.POINT, c.LOGS.FRAME_DATA])
 
     # To get the game results, we are going to get the HP differences in each game.
     # The first implementation of this is going to be rather crude.
@@ -330,3 +332,129 @@ def generate_random_gene(motion_adjustments: list[tuple[str, str]]) -> np.ndarra
         )
 
     return np.stack(header_limits_container).T.flatten()
+
+
+# TODO, can be vectorized and sped up, but really, not the slow point in your code
+# Calculated at the POV of player 1
+def calculate_win_probabilities(
+    data_frame_file_name: str,
+    energy_weight: float = 0.5,
+    frame_window: int = 60,
+    projected_hp_weight: float = 0.5,
+) -> list[np.ndarray]:
+    full_file_path: pathlib.Path = pathlib.Path(
+        os.path.join(
+            'log',
+            c.LOGS.FRAME_DATA,
+            data_frame_file_name,
+        )
+    )
+
+    if not full_file_path.exists():
+        raise FileNotFoundError(f"File: {str(full_file_path)} doesn't exist")
+
+    frame_data_json: list[dict[str, any]]
+    with open(str(full_file_path)) as file:
+        frame_data_json = json.load(file)
+
+    row_count: int = 1
+    if isinstance(frame_data_json, list):
+        row_count = len(frame_data_json)
+
+    collected_win_probabilities: list[np.ndarray] = []
+
+    for row in range(row_count):
+        if row_count == 1:
+            frame_data, max_frame = parse_frame_data(frame_data_json)
+            win_probabilities = np.zeros(dtype=np.float64, shape=(max_frame))
+        else:
+            key_name: str = list(frame_data_json[row].keys())[0]
+            frame_data, max_frame = parse_frame_data(frame_data_json[row][key_name])
+            win_probabilities = np.zeros(dtype=np.float64, shape=(max_frame))
+
+        for index, frame in enumerate(frame_data):
+            p1_hp, p2_hp = frame.hitPoints
+            p1_energy, p2_energy = frame.energy
+
+            if p1_hp <= 0 and p2_hp <= 0 or index == 0:
+                win_probabilities[index] = 0.5
+                continue
+            elif p1_hp <= 0:
+                win_probabilities[index] = 0
+                continue
+            elif p2_hp <= 0:
+                win_probabilities[index] = 1
+                continue
+
+            p1_effective_hp = p1_hp + (p1_energy * energy_weight)
+            p2_effective_hp = p2_hp + (p2_energy * energy_weight)
+
+            past_frame = frame_data[max(0, index - frame_window)]
+
+            p1_hp_lost = past_frame.hitPoints[0] - p1_hp
+            p2_hp_lost = past_frame.hitPoints[1] - p2_hp
+
+            p1_projected_hp = p1_effective_hp - (p1_hp_lost * projected_hp_weight)
+            p2_projected_hp = p2_effective_hp - (p2_hp_lost * projected_hp_weight)
+
+            p1_projected_hp = p1_projected_hp / c.PLAYER_HP
+            p2_projected_hp = p2_projected_hp / c.PLAYER_HP
+
+            total_projected = p1_projected_hp + p2_projected_hp
+            win_probabilities[index] = p1_projected_hp / total_projected
+
+        collected_win_probabilities.append(win_probabilities)
+
+    return collected_win_probabilities
+
+
+# We are going to function under the assumption that the data has already been split
+def calculate_entropy_score(
+    win_probabilities_list: list[np.ndarray],
+    frame_window: int = 60,
+    epsilon: float = 1e-9,
+    gamma_scale: float = 0.25,
+) -> float:
+    total_costs = np.zeros(shape=len(win_probabilities_list), dtype=np.float64)
+
+    for match_index, win_probabilities in enumerate(win_probabilities_list):
+        if win_probabilities.shape[0] <= frame_window:
+            total_costs[match_index] = 1
+            continue
+
+        # TODO: We can speed this up very easily
+        total_frames = win_probabilities.shape[0]
+        time_step_size = 1.0 / total_frames
+
+        total_cost = 0.0
+
+        for frame_index in range(frame_window, total_frames):
+            current_win_probability = win_probabilities[frame_index]
+            previous_win_probability = win_probabilities[frame_index - 1]
+
+            # Done just to enure we never pass o to log for errors
+            sigma_t = (((current_win_probability - previous_win_probability) ** 2) / time_step_size) + epsilon
+
+            # 4. Integrate (multiply by dt and add to the running total)
+            total_cost += (sigma_t - math.log(sigma_t) - 1) * time_step_size
+
+        normalization: float = (epsilon - math.log(epsilon) - 1) * (total_frames - frame_window) * time_step_size
+        total_costs[match_index] = max(0, min(total_cost / normalization, 1))
+
+    # TODO: Can look into using harmonic mean here or sum
+    entropy_score = np.average(total_costs)
+
+    return pow(entropy_score, gamma_scale)
+
+
+def calculate_excitement(experiment_name: str, frame_window: int = 300) -> float:
+    frame_data_path: pathlib.Path = pathlib.Path(os.path.join('log', c.LOGS.FRAME_DATA))
+    frame_data_file: pathlib.Path | None = next(frame_data_path.glob(f'*{experiment_name}*.json'), None)
+
+    if frame_data_file is None or not frame_data_file.exists():
+        raise FileNotFoundError(f'cant find the consolidated point file: *{experiment_name}*.json')
+
+    win_probabilities = calculate_win_probabilities(frame_data_file.name, frame_window=frame_window)
+    overall_excitement: float = calculate_entropy_score(win_probabilities, frame_window=frame_window)
+
+    return 1 - overall_excitement

@@ -22,31 +22,25 @@
 # print('t', t)
 
 # Experiment to determine the point at which running more engines is bad for the system and should rather run more rounds
-import constants as c
-import functions as f
-import dill
-import asyncio
+import pathlib
 import time
-import os
+import math
+import dill
 import numpy as np
 from distributed import Client, LocalCluster
-import sys
-from dask_jobqueue import SLURMCluster
-import pathlib
-
-import MotionClasses.MotionEditor as me
 from pymoo.algorithms.moo.moead import MOEAD
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.optimize import minimize
-from GeneticAlgorithm.FightingIceProblem import FightingIceProblem
-from pymoo.termination import get_termination
-from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.decomposition.pbi import PBI
-from pymoo.parallelization.dask import DaskParallelization
-from pymoo.operators.sampling.rnd import IntegerRandomSampling
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PolynomialMutation
+from pymoo.operators.sampling.rnd import IntegerRandomSampling
+from pymoo.optimize import minimize
+from pymoo.termination import get_termination
+from pymoo.util.ref_dirs import get_reference_directions
 
+import constants as c
+import functions as f
+import GeneticAlgorithm.genetic_functions as gf
+from GeneticAlgorithm.FightingIceProblem import FightingIceProblem
 
 # async def run_games(no_engines: int):
 #     common_commands = [
@@ -128,6 +122,17 @@ from pymoo.operators.mutation.pm import PolynomialMutation
 #         boolean_motions=None,
 #     )
 
+# if __name__ == '__main__':
+#     frame_window: int = 360
+#     exp_name: str = 'runner_03.07.03-2026.04.29_03.07.02.json'
+#     win_probabilities = gf.calculate_win_probabilities(exp_name, frame_window=frame_window)
+#     # best_diff = 1-math.sqrt(1./6.)
+#     # best_diff = 0.6
+#     # print(best_diff)
+#     # win_probabilities = np.array([1.0, best_diff, 1, best_diff, 1, best_diff])
+#     entropy = gf.calculate_entropy_score(win_probabilities[::3], frame_window=frame_window)
+#     print(entropy)
+
 if __name__ == '__main__':
     f.arg_parser()
 
@@ -138,7 +143,7 @@ if __name__ == '__main__':
         print('--- Running with Scheduler File ---')
         client = Client(scheduler_file=c.SCHEDULER_FILE)
 
-        print(f'Waiting for workers to report for duty...')
+        print('Waiting for workers to report for duty...')
         client.wait_for_workers(n_workers=c.NODES, timeout=30)
         print('Cluster is fully populated. Starting Evolution.')
     else:
@@ -157,7 +162,7 @@ if __name__ == '__main__':
 
     try:
         problem = FightingIceProblem(
-            experiment_name='mixed_exp_02_32v_n15_c20_m20_th10',
+            experiment_name='excitement_metric',
             dask_client=client,
             engine_multiplier=4,
             no_matches=10,
@@ -196,7 +201,10 @@ if __name__ == '__main__':
 
         f.consolidate_data(
             problem.experiment_name,
-            exclude_list=[c.LOGS.POINT],
+            exclude_list=[
+                c.LOGS.POINT,
+                c.LOGS.FRAME_DATA,
+            ],
         )
 
         end_time = time.perf_counter()
