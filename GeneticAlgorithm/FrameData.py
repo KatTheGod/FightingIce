@@ -35,6 +35,8 @@ class FrameData:
 
 def parse_frame_data(raw_data: list[dict[str, any]]) -> tuple[list[FrameData | None], int]:
     frames: list[FrameData] = []
+    if isinstance(raw_data, int):
+        print("INT incoming", raw_data)
     max_frame: int = len(raw_data)
     for frame_index, frame in enumerate(raw_data):
         if frame is None:
