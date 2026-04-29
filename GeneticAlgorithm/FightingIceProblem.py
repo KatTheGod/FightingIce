@@ -86,7 +86,7 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> list[flo
 
     competitive_balance: float = f.transform_win_rate(average_win_rate)
 
-    excitement = gf.calculate_excitement(settings.experiment_name)
+    excitement = asyncio.run(gf.calculate_excitement(settings.experiment_name))
 
     # return np.array([-uniqueness_reward, -competitive_balance], dtype=np.float64)
     return np.array([-excitement, 0], dtype=np.float64)

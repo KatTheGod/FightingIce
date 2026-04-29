@@ -105,26 +105,39 @@ def constraint_novelty_search(
     ) / 3
 
 
-async def wait_for_point_file(experiment_name: str, timeout: int = 10) -> pathlib.Path | None:
+async def wait_for_file(
+    experiment_name: str,
+    log_group: str,
+    extension: str,
+    timeout: int = 10,
+) -> pathlib.Path | None:
     if c.BASE_PATH is not None:
-        point_path: pathlib.Path = pathlib.Path(os.path.join(c.BASE_PATH, 'log', 'point'))
+        file_path: pathlib.Path = pathlib.Path(os.path.join(c.BASE_PATH, 'log', log_group))
     else:
-        point_path: pathlib.Path = pathlib.Path(os.path.join('log', 'point'))
+        file_path: pathlib.Path = pathlib.Path(os.path.join('log', log_group))
 
     start_poll = time.time()
     time_str = datetime.now().strftime('%H:%M:%S')
 
     print(f'looking for {experiment_name} at {time_str}')
     while time.time() - start_poll < timeout:
-        point_csv: pathlib.Path | None = next(point_path.glob(f'{experiment_name}*.csv'), None)
-        if point_csv is not None:
-            return point_csv
+        file: pathlib.Path | None = next(file_path.glob(f'*{experiment_name}*.{extension}'), None)
+        if file is not None:
+            return file
 
         await asyncio.sleep(1)
 
     time_str = datetime.now().strftime('%H:%M:%S')
     print(f'Failed at {time_str}')
     return None
+
+
+async def wait_for_point_file(experiment_name: str, timeout: int = 10) -> pathlib.Path | None:
+    return await wait_for_file(experiment_name, c.LOGS.POINT, 'csv', timeout=timeout)
+
+
+async def wait_for_df_file(experiment_name: str, timeout: int = 10) -> pathlib.Path | None:
+    return await wait_for_file(experiment_name, c.LOGS.FRAME_DATA, 'json', timeout=timeout)
 
 
 """
@@ -447,9 +460,8 @@ def calculate_entropy_score(
     return pow(entropy_score, gamma_scale)
 
 
-def calculate_excitement(experiment_name: str, frame_window: int = 300) -> float:
-    frame_data_path: pathlib.Path = pathlib.Path(os.path.join('log', c.LOGS.FRAME_DATA))
-    frame_data_file: pathlib.Path | None = next(frame_data_path.glob(f'*{experiment_name}*.json'), None)
+async def calculate_excitement(experiment_name: str, frame_window: int = 300) -> float:
+    frame_data_file: pathlib.Path | None = await wait_for_df_file(experiment_name)
 
     if frame_data_file is None or not frame_data_file.exists():
         raise FileNotFoundError(f'cant find the consolidated point file: *{experiment_name}*.json')
