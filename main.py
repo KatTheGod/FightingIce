@@ -123,14 +123,15 @@ from GeneticAlgorithm.FightingIceProblem import FightingIceProblem
 #     )
 
 # if __name__ == '__main__':
-#     frame_window: int = 360
-#     exp_name: str = 'runner_03.07.03-2026.04.29_03.07.02.json'
+#     # frame_window: int = 360
+#     # exp_name: str = 'runner_03.07.03-2026.04.29_03.07.02.json'
 #     win_probabilities = gf.calculate_win_probabilities(exp_name, frame_window=frame_window)
-#     # best_diff = 1-math.sqrt(1./6.)
+#     best_diff = 1-math.sqrt(1./6.)
 #     # best_diff = 0.6
 #     # print(best_diff)
-#     # win_probabilities = np.array([1.0, best_diff, 1, best_diff, 1, best_diff])
-#     entropy = gf.calculate_entropy_score(win_probabilities[::3], frame_window=frame_window)
+#     win_probabilities = np.array([1, best_diff, 1, best_diff, 1, best_diff])
+#     # entropy = gf.calculate_entropy_score(win_probabilities[::3], frame_window=frame_window)
+#     entropy = gf.calculate_entropy_score([win_probabilities], frame_window=1)
 #     print(entropy)
 
 if __name__ == '__main__':
