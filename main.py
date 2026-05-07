@@ -166,7 +166,7 @@ if __name__ == '__main__':
         client = Client(cluster)
 
     print(f'Dask Dashboard available at: {client.dashboard_link}')
-    experiment_name: str = 'uniq_p32_n10_energy'
+    experiment_name: str = 'comp_p32_n10_energy'
 
     try:
         previous_result = f.resume_algorithm(None)
