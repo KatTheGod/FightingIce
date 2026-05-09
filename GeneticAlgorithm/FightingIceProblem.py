@@ -87,7 +87,7 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
     return np.array(
         [
             -competitive_balance,
-            # -excitement,
+            -excitement,
             -uniqueness_reward,
         ],
         dtype=np.float64,
@@ -179,7 +179,7 @@ class FightingIceProblem(Problem):
         super().__init__(
             elementwise=False,
             **kwargs,
-            n_obj=2,
+            n_obj=3,
             n_ieq_constr=0,
             xl=xl,
             xu=xu,
