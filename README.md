@@ -17,6 +17,8 @@
 - Current MCTS Still has some miss instances, need to diagnose that.
 - We need look at adding match duration as another objective.
 - We need to look into incorporating te passing of 50% into the entropy score
+- Look into that normalization into the entropy term that chat said, dividing vy the Alduos
+- Validate uniqueness working as expected... Single uniqueness runs don't maximize... thats weird!
 - ✅ Correct the uniqueness constraint... Its looking at everything, which isnt fair. We need louder signals for things we actually control.
 - ✅ When you look at solution replay, there is a lot of variance. We need to do experiments to find the optimal number of games to play to reduce that variance!!!
 - ✅Look into using a Vectorized evaluation
