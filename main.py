@@ -181,7 +181,7 @@ if __name__ == '__main__':
         client = Client(cluster)
 
     print(f'Dask Dashboard available at: {client.dashboard_link}')
-    experiment_name: str = 'ex_uq_p31_n10_e4_g8_energy'
+    experiment_name: str = 'cb_ex_uq_p10_n5_e4_g8_energy'
 
     try:
         previous_result = f.resume_algorithm(None)
@@ -206,11 +206,11 @@ if __name__ == '__main__':
                     # Must be greater than n_neighbors
                     ref_dirs=get_reference_directions(
                         c.pymoo.MOEAD.SpreadType.DAS_DENNIS,
-                        n_dim=2,
-                        n_partitions=31,
+                        n_dim=3,
+                        n_partitions=10,
                     ),
                     # Magic number is 20
-                    n_neighbors=10,
+                    n_neighbors=5,
                     decomposition=PBI(theta=10),
                     sampling=IntegerRandomSampling(),
                     crossover=SBX(prob=1.0, eta=20, vtype=int),
