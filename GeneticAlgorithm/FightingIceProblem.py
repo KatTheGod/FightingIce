@@ -84,8 +84,8 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
 
     return np.array(
         [
-            -competitive_balance,
-            # -excitement,
+            # -competitive_balance,
+            -excitement,
             -uniqueness_reward,
         ],
         dtype=np.float64,
