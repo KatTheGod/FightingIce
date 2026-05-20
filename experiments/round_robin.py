@@ -61,7 +61,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
         asyncio.run(
             gf.orchestrate_matches(
                 mutated_motions=DEFAULT_MOTION_LIST,
-                no_matches=1,
+                no_matches=8,
                 experiment_name=amended_experiment_name,
                 engine_multiplier=1,
                 game_duration_sec=c.GAME_DURATION_SEC,
@@ -90,7 +90,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
         asyncio.run(
             gf.orchestrate_matches(
                 mutated_motions=DEFAULT_MOTION_LIST,
-                no_matches=1,
+                no_matches=8,
                 experiment_name=amended_experiment_name,
                 engine_multiplier=1,
                 game_duration_sec=c.GAME_DURATION_SEC,
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     win_rates = client.gather(
         client.map(
             run_matchup,
-            configurations[:2],
+            configurations,
             resources={'cores': 3},
         )
     )
