@@ -495,11 +495,12 @@ async def orchestrate_matches(
 
         agent1 = None
         agent2 = None
-        agent_1_name = None
-        agent_2_name = None
 
         character_duo = character_names[index % 3, :]
         agent_duo = agent_names[index % 3, :]
+
+        agent_1_name = agent_duo[0]
+        agent_2_name = agent_duo[1]
 
         agent_1_motion = motions[c.CHARACTER_ORDER[character_duo[0]]]
         agent_2_motion = motions[c.CHARACTER_ORDER[character_duo[1]]]
@@ -515,8 +516,6 @@ async def orchestrate_matches(
                 )
                 gateway.register_ai(agent1.name(), agent1)
                 agent_1_name = agent1.name()
-            case c.AgentNames.CONSISTENT_MCTS_AGENT:
-                agent_1_name = c.AgentNames.CONSISTENT_MCTS_AGENT
 
         match agent_duo[1]:
             case c.AgentNames.KAT_KICK_AI:
@@ -529,8 +528,6 @@ async def orchestrate_matches(
                 )
                 gateway.register_ai(agent2.name(), agent2)
                 agent_2_name = agent2.name()
-            case c.AgentNames.CONSISTENT_MCTS_AGENT:
-                agent_2_name = c.AgentNames.CONSISTENT_MCTS_AGENT
 
         game_name = f'{experiment_name}-instance-{index}-{agent_1_name}-vs-{agent_2_name}'
 
@@ -579,6 +576,8 @@ async def start_simulators(
     experiment_name: str,
     deterministic: bool = True,  # We aren't really going to use this in future... should think of redacting
     extra_commands: list[str] | np.ndarray | None = None,
+    environment: str | None = None,
+    environment_name: str | None = None,
 ) -> None:
     if '-' in experiment_name:
         raise ValueError('Please avoid using experiment names with -, it will mess up the data consolidator')
@@ -594,6 +593,10 @@ async def start_simulators(
 
     task_containers: list[asyncio.Task] = []
 
+    process_env = os.environ.copy()
+    if environment is not None:
+        process_env[environment_name] = environment
+
     for index in range(no_engines):
         proc = await asyncio.create_subprocess_exec(
             *common_commands,
@@ -604,6 +607,7 @@ async def start_simulators(
             ),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
+            env=process_env,
         )
         simulators.append(proc)
 

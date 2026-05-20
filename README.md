@@ -57,3 +57,9 @@ $$R(p)=e^{-\frac{(0.5-p)^2}{2\sigma^2}}$$
 - Maybe deterministic
 - Check seeds as well✅
 - Add visualization over run. ✅
+- Really look into new method for defining uniqueness, we are just defining the genotype, and we need to measure the phenotype impact.
+- Create MCTS agent that can play well. because we are currently not playing that well
+
+
+# Notes for long jobs
+- Please make sure that neutral has a cost of 0. This would kill some MCTS agent in some instances

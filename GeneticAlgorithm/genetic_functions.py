@@ -154,6 +154,9 @@ async def orchestrate_matches(
     engine_multiplier: int,
     game_duration_sec: int = 60,
     visual: bool = False,
+    agents: np.ndarray | None = None,
+    environment: str | None = None,
+    environment_name: str | None = None,
 ) -> float:
     c.NO_GAMES = no_matches
     c.POLL_INTERVAL_SEC = 0
@@ -225,7 +228,11 @@ async def orchestrate_matches(
     ]
     characters = np.array(characters).reshape(3, -1)
 
-    agents = np.full(shape=(3, 2), fill_value=c.AgentNames.CONSISTENT_MCTS_AGENT)
+    agents = (
+        np.full(shape=(3, 2), fill_value=c.AgentNames.CONSISTENT_MCTS_AGENT)  #
+        if agents is None
+        else agents
+    )
 
     await f.start_simulators(
         engine_multiplier * 3,
@@ -236,6 +243,8 @@ async def orchestrate_matches(
         experiment_name,
         # deterministic=deterministic, really dont care
         extra_commands=argument_for_custom_motions,
+        environment=environment,
+        environment_name=environment_name,
     )
 
     f.consolidate_data(experiment_name, log_list=[c.LOGS.POINT, c.LOGS.FRAME_DATA])
@@ -282,6 +291,7 @@ async def orchestrate_matches(
         ]
     )
 
+    return win_rates
     win_rates: np.ndarray = f.transform_win_rate_array(win_rates)
 
     return min(

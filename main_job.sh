@@ -41,4 +41,4 @@ srun --quiet \
     --nthreads $CORES \
     --resources "cores=$CORES" &
 
-conda run -n fightingIceEnv_stable python main.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH
+conda run -n fightingIceEnv_stable python experiments/round_robin.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH
