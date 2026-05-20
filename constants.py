@@ -97,6 +97,7 @@ class AgentNames:
     MCTS_AGENT = 'MctsAi23i'
     CONSISTENT_MCTS_AGENT = 'MctsAi23i.MctsAi23i'
     KAT_MCTS_AGENT = 'katai.mcts.basic.MCTSAgent'
+    KAY_MCTS_MX_AGENT = 'katai.mcts.mx_mcts_acc.MCTSAgent'
     KAT_KICK_AI = 'kat kick'
 
 class ScreenDimensions:
