@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -p stampede
 #SBATCH -c 15
-#SBATCH -N 17
+#SBATCH -N 18
 #SBATCH -J mchup
 #SBATCH --ntasks-per-node=1
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
@@ -16,7 +16,7 @@ mkdir -p dask_schedulers
 PROJECT_ROOT="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
-NODES=17
+NODES=18
 CORES=15
 BASE_PATH="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 DASK_FILE="${BASE_PATH}/dask_schedulers/dask_${SLURM_JOB_ID}.json"

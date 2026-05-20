@@ -93,7 +93,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
                 no_matches=8,
                 experiment_name=amended_experiment_name,
                 engine_multiplier=1,
-                game_duration_sec=c.GAME_DURATION_SEC,
+                game_duration_sec=30,
                 visual=False,
                 agents=np.tile(
                     np.array(
