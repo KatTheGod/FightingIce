@@ -40,6 +40,10 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
         * AgentConfigRanges.usedReversedActionList.index(configuration[6])
     )
 
+    no_matches: int = 8
+    game_time: int = c.GAME_DURATION_SEC
+    engine_multiplier: int = 1
+
     win_rates: list[np.ndarray] = []
     experiment_name: str = f'matchup_{iteration_count}_P1'
     amended_experiment_name: str = f.append_time_uuid_experiment(experiment_name)
@@ -61,10 +65,10 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
         asyncio.run(
             gf.orchestrate_matches(
                 mutated_motions=DEFAULT_MOTION_LIST,
-                no_matches=8,
+                no_matches=no_matches,
                 experiment_name=amended_experiment_name,
-                engine_multiplier=1,
-                game_duration_sec=c.GAME_DURATION_SEC,
+                engine_multiplier=engine_multiplier,
+                game_duration_sec=game_time,
                 visual=False,
                 agents=np.tile(
                     np.array(
@@ -90,10 +94,10 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
         asyncio.run(
             gf.orchestrate_matches(
                 mutated_motions=DEFAULT_MOTION_LIST,
-                no_matches=8,
+                no_matches=no_matches,
                 experiment_name=amended_experiment_name,
-                engine_multiplier=1,
-                game_duration_sec=30,
+                engine_multiplier=engine_multiplier,
+                game_duration_sec=game_time,
                 visual=False,
                 agents=np.tile(
                     np.array(
@@ -162,7 +166,7 @@ if __name__ == '__main__':
     win_rates = client.gather(
         client.map(
             run_matchup,
-            configurations,
+            configurations[:100],
             resources={'cores': 3},
         )
     )
