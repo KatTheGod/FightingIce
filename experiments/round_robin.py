@@ -40,7 +40,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
         * AgentConfigRanges.usedReversedActionList.index(configuration[6])
     )
 
-    no_matches: int = 8
+    no_matches: int = 12
     game_time: int = c.GAME_DURATION_SEC
     engine_multiplier: int = 1
 
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     win_rates = client.gather(
         client.map(
             run_matchup,
-            configurations[:100],
+            configurations,
             resources={'cores': 3},
         )
     )
