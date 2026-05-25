@@ -38,7 +38,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
         * AgentConfigRanges.usedReversedActionList.index(configuration[6])
     )
 
-    no_matches: int = 1
+    no_matches: int = 12
     game_time: int = c.GAME_DURATION_SEC
     engine_multiplier: int = 1
 
