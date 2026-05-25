@@ -184,7 +184,7 @@ if __name__ == '__main__':
     win_rates = client.gather(
         client.map(
             run_matchup,
-            configurations[:10],
+            configurations,
             resources={'cores': 3},
         )
     )
