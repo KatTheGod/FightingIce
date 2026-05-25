@@ -40,7 +40,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
         * AgentConfigRanges.usedReversedActionList.index(configuration[6])
     )
 
-    no_matches: int = 12
+    no_matches: int = 1
     game_time: int = c.GAME_DURATION_SEC
     engine_multiplier: int = 1
 
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     f.set_random_seeds(c.GLOBAL_SEED)
     f.arg_parser()
 
-    pathlib.Path(os.path.join("experiments", "round_robin")).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(os.path.join(c.LOGS.EXPERIMENTS_FOLDER, c.LOGS.ROUND_ROBIN)).mkdir(parents=True, exist_ok=True)
 
     if c.SCHEDULER_FILE is not None:
         if not pathlib.Path(c.SCHEDULER_FILE).exists():
@@ -168,7 +168,7 @@ if __name__ == '__main__':
     win_rates = client.gather(
         client.map(
             run_matchup,
-            configurations,
+            configurations[:10],
             resources={'cores': 3},
         )
     )

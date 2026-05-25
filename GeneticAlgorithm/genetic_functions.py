@@ -6,6 +6,7 @@ import pathlib
 import time
 from datetime import datetime
 from itertools import combinations
+import gzip
 
 import numpy as np
 import pandas
@@ -292,6 +293,7 @@ async def orchestrate_matches(
     )
 
     return win_rates
+
     win_rates: np.ndarray = f.transform_win_rate_array(win_rates)
 
     return min(
@@ -497,5 +499,8 @@ async def calculate_excitement(experiment_name: str, tanh_scale: float = 3, fram
 
     win_probabilities = calculate_win_probabilities(frame_data_file.name, frame_window=frame_window)
     overall_excitement: float = calculate_entropy_score(win_probabilities, frame_window=frame_window, tanh_scale=tanh_scale)
+
+    # NOTE: We are not deleting it here because it was a bloody hassle to compress it and use it. Yarre
+    frame_data_file.unlink()
 
     return overall_excitement
