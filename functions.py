@@ -13,6 +13,7 @@ import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from itertools import islice
+import zipfile
 
 import aiofiles
 import dill
@@ -243,6 +244,14 @@ def consolidate_data(
                 ','.join(unknown_directories),
             )
 
+    # Going to first compress the motions in custom motions
+    if c.ZIP_FILES and c.CUSTOM_MOTION_PATH not in exclude_list:
+        custom_motion_folder_path = pathlib.Path(os.path.join(c.CUSTOM_MOTION_PATH, experiment_name))
+        if custom_motion_folder_path.exists():
+            shutil.make_archive(base_name=str(custom_motion_folder_path), format='zip', root_dir=c.CUSTOM_MOTION_PATH, base_dir=experiment_name)
+
+            purge_directory(str(custom_motion_folder_path), True)
+
     for log_group_name in log_list:
         if log_group_name in exclude_list:
             continue
@@ -337,6 +346,17 @@ def consolidate_data(
 
                     if log_group_name == c.LOGS.FRAME_DATA:
                         consolidated_file.write(']')
+
+                # errthang gets a ZIP
+                if c.ZIP_FILES and log_group_name != c.LOGS.POINT:
+                    zip_path: str = str(consolidated_file_name.with_suffix('.zip'))
+                    with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED) as zip_file:
+                        zip_file.write(
+                            consolidated_file_name,
+                            arcname=consolidated_file_name.name,
+                        )
+
+                    consolidated_file_name.unlink()
 
 
 def kill_process(process: asyncio.subprocess.Process) -> None:
@@ -821,3 +841,8 @@ def resume_algorithm(plk_name: str | None, throw_error: bool = False) -> Result 
 def set_random_seeds(seed: int) -> None:
     np.random.seed(seed)
     random.seed(seed)
+
+
+def create_experiments_sub_folders() -> None:
+    pathlib.Path(os.path.join(c.LOGS.EXPERIMENTS_FOLDER, c.LOGS.ROUND_ROBIN)).mkdir(exist_ok=True, parents=True)
+    pathlib.Path(os.path.join(c.LOGS.EXPERIMENTS_FOLDER, c.LOGS.META_DISCOVERY)).mkdir(exist_ok=True, parents=True)

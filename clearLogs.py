@@ -11,6 +11,10 @@ for log_group_name in c.LOGS.KNOWN_LOGS:
         False,
     )
 
+
+print('purging custom motions')
+f.purge_directory(c.CUSTOM_MOTION_PATH, False)
+
 print('purging dask logs')
 f.purge_directory(c.LOGS.DASK_LOGS, False)
 

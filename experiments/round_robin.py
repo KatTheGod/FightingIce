@@ -122,6 +122,8 @@ if __name__ == '__main__':
     f.set_random_seeds(c.GLOBAL_SEED)
     f.arg_parser()
 
+    pathlib.Path(os.path.join("experiments", "round_robin")).mkdir(parents=True, exist_ok=True)
+
     if c.SCHEDULER_FILE is not None:
         if not pathlib.Path(c.SCHEDULER_FILE).exists():
             raise FileNotFoundError(f'Missing file: {c.SCHEDULER_FILE}.\nCannot start job at all')
