@@ -14,6 +14,7 @@ from pymoo.core.variable import Integer
 import constants as c
 import functions as f
 import GeneticAlgorithm.genetic_functions as gf
+from GeneticAlgorithm.meta_space import MetaStateSubset, META_SUBSPACE_COLLECTION
 from MotionClasses.MotionHeaders import MotionHeaders as headers
 from MotionClasses.MotionNames import MotionNames as motion_names
 
@@ -77,10 +78,25 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
             engine_multiplier=settings.engine_multiplier,
             game_duration_sec=settings.game_duration_sec,
             visual=settings.visual,
+            agents=np.tile(
+                [
+                    c.AgentNames.KAY_MCTS_MX_AGENT,
+                    c.AgentNames.KAY_MCTS_MX_AGENT,
+                ],
+                reps=3,
+            ).reshape(3, -1),
         )
     )
 
     excitement = asyncio.run(gf.calculate_excitement(amended_experiment_name, frame_window=10))
+
+    f.consolidate_data(
+        amended_experiment_name,
+        exclude_list=[
+            c.LOGS.POINT,
+            c.LOGS.FRAME_DATA,
+        ],
+    )
 
     return np.array(
         [
@@ -97,6 +113,7 @@ class FightingIceProblem(Problem):
         self,
         experiment_name: str,
         dask_client: Client,
+        meta_subspace: MetaStateSubset,
         no_matches: int = 1,
         engine_multiplier: int = 1,
         game_duration_sec: int = 60,
@@ -106,6 +123,7 @@ class FightingIceProblem(Problem):
 
         self.visual = visual
         self.experiment_name = experiment_name
+        self.meta_space_subset: MetaStateSubset = meta_subspace
         self.no_matches = no_matches
         self.engine_multiplier = engine_multiplier
         self.game_duration_sec = game_duration_sec
@@ -113,54 +131,19 @@ class FightingIceProblem(Problem):
 
         # Going to adjust the experiment name if its already in use
         pathlib.Path(c.CUSTOM_MOTION_PATH).mkdir(parents=True, exist_ok=True)
-        experiment_name_regex = re.compile(rf'{experiment_name}_(\d+).*')
+        experiment_name_regex = re.compile(rf'{self.meta_space_subset.index}_{experiment_name}_(\d+).*')
         experiment_name_number: int = -1
         for directory in pathlib.Path(c.CUSTOM_MOTION_PATH).iterdir():
             match = experiment_name_regex.match(directory.name)
             if match:
                 experiment_name_number = max(-1, int(match.group(1)))
 
-        self.experiment_name = f'{experiment_name}_{experiment_name_number + 1}'
+        self.experiment_name = f'{meta_subspace.index}_{experiment_name}_{experiment_name_number + 1}'
         print(f'Derived experiment name: {self.experiment_name}')
 
-        # For the first iteration, we are only going to increase the hit damage for stand a, and energy add for stand b
-        # Remember this is for every character
-        self.motion_adjustments: list[tuple[str, str]] = [
-            (motion_names.STAND_A, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.STAND_A, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.STAND_B, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.STAND_B, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.CROUCH_A, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.CROUCH_A, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.CROUCH_B, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.CROUCH_B, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_A, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_A, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_B, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_B, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_DA, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_DA, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_DB, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_DB, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.STAND_FA, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.STAND_FA, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.STAND_FB, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.STAND_FB, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.CROUCH_FA, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.CROUCH_FA, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.CROUCH_FB, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.CROUCH_FB, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_FA, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_FA, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_FB, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_FB, headers.ATTACK_GIVE_ENERGY),
-            (motion_names.AIR_UA, headers.ATTACK_HIT_ADD_ENERGY),
-            (motion_names.AIR_UA, headers.ATTACK_GIVE_ENERGY),
-        ]
-
+        self.motion_adjustments: list[tuple[str, str]] = self.meta_space_subset.meta_subspace
         self.motion_coordinates: np.ndarray = gf.get_motion_coordinates(self.motion_adjustments)
         self.numerical_mapped_motion_coordinates = gf.map_numerical_motion_coordinates(self.motion_adjustments)
-
         # might not be needed
         self.motion_mapper = f.motion_cord_to_index_bulk(self.motion_coordinates)
 

@@ -1,18 +1,18 @@
-import numpy as np
-import pathlib
-from itertools import product
-import math
-from distributed import Client, LocalCluster
 import asyncio
 import json
-import time
+import math
 import os
+import pathlib
+import time
+from itertools import product
 
+import numpy as np
+from distributed import Client, LocalCluster
+
+import constants as c
+import functions as f
 import GeneticAlgorithm.genetic_functions as gf
 from MotionClasses.MotionEditor import DEFAULT_MOTION_LIST
-
-import functions as f
-import constants as c
 
 
 class AgentConfigRanges:
@@ -82,8 +82,17 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
                 ).reshape(3, -1),
                 environment=environment,
                 environment_name=environment_name,
+                force_frame_data_unlink=True,
             )
         )
+    )
+
+    f.consolidate_data(
+        experiment_name,
+        exclude_list=[
+            c.LOGS.FRAME_DATA,
+            c.LOGS.POINT,
+        ]
     )
 
     experiment_name: str = f'matchup_{iteration_count}_P2'
@@ -111,8 +120,17 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
                 ).reshape(3, -1),
                 environment=environment,
                 environment_name=environment_name,
+                force_frame_data_unlink=True,
             )
         )
+    )
+
+    f.consolidate_data(
+        experiment_name,
+        exclude_list=[
+            c.LOGS.FRAME_DATA,
+            c.LOGS.POINT,
+        ]
     )
 
     return tuple(win_rates)

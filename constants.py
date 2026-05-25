@@ -35,6 +35,10 @@ class LOGS:
     DASK_LOGS: str = 'dask_logs'
     SOLUTION_EXPLORER: str = 'solution_explorer'
 
+    # Experiments related content
+    EXPERIMENTS_FOLDER: str = 'experiments'
+    ROUND_ROBIN: str = 'round_robin'
+    META_DISCOVERY: str = 'meta_discovery'
 
     KNOWN_LOGS: list[str] = [
         ENGINES,

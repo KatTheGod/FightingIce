@@ -158,6 +158,7 @@ async def orchestrate_matches(
     agents: np.ndarray | None = None,
     environment: str | None = None,
     environment_name: str | None = None,
+    force_frame_data_unlink: bool = False,
 ) -> float:
     c.NO_GAMES = no_matches
     c.POLL_INTERVAL_SEC = 0
@@ -213,11 +214,8 @@ async def orchestrate_matches(
         '--time-stamp',
         c.GAME_TIME,
         *(['--headless-mode'] if not visual else []),
-        '--input-sync',
         *(['--lightweight-mode'] if not visual else []),
         '--pyftg-mode',
-        '--non-delay',
-        '2',
     ]
 
     os.makedirs(os.path.join('log', 'engines'), exist_ok=True)
@@ -248,7 +246,14 @@ async def orchestrate_matches(
         environment_name=environment_name,
     )
 
-    f.consolidate_data(experiment_name, log_list=[c.LOGS.POINT, c.LOGS.FRAME_DATA])
+    f.consolidate_data(
+        experiment_name,
+        log_list=[
+            c.LOGS.POINT,
+            c.LOGS.FRAME_DATA,
+        ],
+        force_frame_data_unlink=force_frame_data_unlink,
+    )
 
     # To get the game results, we are going to get the HP differences in each game.
     # The first implementation of this is going to be rather crude.

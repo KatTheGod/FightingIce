@@ -220,6 +220,7 @@ def consolidate_data(
     experiment_name: str,
     log_list: list[str] | None = None,
     exclude_list: list[str] | None = None,
+    force_frame_data_unlink: bool = False,
 ) -> None:
     if exclude_list is None:
         exclude_list = []
@@ -262,7 +263,7 @@ def consolidate_data(
         time_stamps: set = set()
         file_names: list[str] = []
         for file in log_group.iterdir():
-            if file.is_file():
+            if file.is_file() and file.suffix != '.zip':
                 file_names.append(file.name)
                 time_stamps.add(file.name.split('-').pop().rsplit('.', 1)[0])
 
@@ -356,7 +357,9 @@ def consolidate_data(
                             arcname=consolidated_file_name.name,
                         )
 
-                    consolidated_file_name.unlink()
+                    # NOTE: We unlint frame data after calculating the excitement. Can think of better method later. Was a hasle
+                    if log_group_name != c.LOGS.FRAME_DATA or force_frame_data_unlink:
+                        consolidated_file_name.unlink()
 
 
 def kill_process(process: asyncio.subprocess.Process) -> None:
@@ -562,7 +565,8 @@ async def orchestrate_matches(
         )
 
     # Kill matches if games take too long to finish
-    duration: float = c.GAME_DURATION_SEC * c.NO_GAMES * 1.5
+    # We see that it takes about 10 seconds for a game to start up, so we are adding that upfront.
+    duration: float = c.GAME_DURATION_SEC * c.NO_GAMES * 2 + 10
     try:
         await asyncio.wait_for(
             monitor_matches(simulators, matches),
