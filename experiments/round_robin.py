@@ -28,8 +28,6 @@ class AgentConfigRanges:
 
 
 def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tuple[np.ndarray, np.ndarray]:
-    print('matchup ran')
-
     iteration_count = (
         AgentConfigRanges.maxDepth.index(configuration[0])
         * AgentConfigRanges.ucbConstant.index(configuration[1])
@@ -88,11 +86,11 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
     )
 
     f.consolidate_data(
-        experiment_name,
+        amended_experiment_name,
         exclude_list=[
             c.LOGS.FRAME_DATA,
             c.LOGS.POINT,
-        ]
+        ],
     )
 
     experiment_name: str = f'matchup_{iteration_count}_P2'
@@ -126,11 +124,11 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
     )
 
     f.consolidate_data(
-        experiment_name,
+        amended_experiment_name,
         exclude_list=[
             c.LOGS.FRAME_DATA,
             c.LOGS.POINT,
-        ]
+        ],
     )
 
     return tuple(win_rates)
@@ -194,7 +192,14 @@ if __name__ == '__main__':
     end_time = time.perf_counter()
     print(f'time: {end_time - start_time}')
 
-    with open(os.path.join('experiments', f'{f.append_time_uuid_experiment("round_robin_results")}.txt'), 'a') as f:
+    with open(
+        os.path.join(
+            c.LOGS.EXPERIMENTS_FOLDER,
+            c.LOGS.ROUND_ROBIN,
+            f'{(f.append_time_uuid_experiment("round_robin_results"))}.txt',
+        ),
+        'a',
+    ) as f:
         f.write('Win rates:\n')
         f.write(f'{win_rates}\n\n')
 
