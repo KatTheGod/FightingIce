@@ -69,6 +69,7 @@ def replay_single_mutation(gene: np.ndarray, match_per_agent: int, motion_adjust
 
 # We designed this function such that we can maybe expand it to work on the cluster if we need it to.
 def generate_data(match_counts: np.ndarray, repeat_count: int = 10) -> None:
+    raise NotImplementedError("Generating a new gene needs to be adjusted")
     motion_adjustments: list[tuple[str, str]] = [
         (motion_names.STAND_A, headers.ATTACK_HIT_DAMAGE),
         (motion_names.STAND_B, headers.ATTACK_HIT_ADD_ENERGY),

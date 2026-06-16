@@ -60,6 +60,63 @@ class MotionNamesEnum(Enum):
     STAND_D_DF_FC: str = 'STAND_D_DF_FC'
 
 
+# NOTE: IF you change the order of this stuff later, it could affect the quality of the code in the limits mapper
+PRIMARY_ACTIONS_ATTACK: list[MotionNamesEnum] = [
+    MotionNamesEnum.STAND_A,
+    MotionNamesEnum.STAND_B,
+    MotionNamesEnum.CROUCH_A,
+    MotionNamesEnum.CROUCH_B,
+    MotionNamesEnum.AIR_A,
+    MotionNamesEnum.AIR_B,
+    MotionNamesEnum.THROW_A,
+    MotionNamesEnum.THROW_B,
+]
+
+SECONDARY_ACTIONS_ATTACK: list[MotionNamesEnum] = [
+    MotionNamesEnum.STAND_FA,
+    MotionNamesEnum.STAND_FB,
+    MotionNamesEnum.CROUCH_FA,
+    MotionNamesEnum.CROUCH_FB,
+    MotionNamesEnum.AIR_FA,
+    MotionNamesEnum.AIR_FB,
+    MotionNamesEnum.AIR_DA,
+    MotionNamesEnum.AIR_DB,
+    MotionNamesEnum.AIR_UB,
+    MotionNamesEnum.AIR_UB,
+]
+
+TERTIARY_ACTIONS_ATTACK: list[MotionNamesEnum] = [
+    MotionNamesEnum.STAND_D_DF_FA,
+    MotionNamesEnum.STAND_D_DF_FB,
+    MotionNamesEnum.STAND_F_D_DFA,
+    MotionNamesEnum.STAND_F_D_DFB,
+    MotionNamesEnum.STAND_D_DB_BA,
+    MotionNamesEnum.STAND_D_DB_BB,
+    MotionNamesEnum.AIR_D_DF_FA,
+    MotionNamesEnum.AIR_D_DF_FB,
+    MotionNamesEnum.AIR_F_D_DFA,
+    MotionNamesEnum.AIR_F_D_DFB,
+    MotionNamesEnum.AIR_D_DB_BA,
+    MotionNamesEnum.AIR_D_DB_BB,
+]
+
+ULTIMATE_ATTACK = MotionNamesEnum.STAND_D_DF_FC
+
+MOVEMENT_ACTIONS: list[MotionNamesEnum] = [
+    MotionNamesEnum.FORWARD_WALK,
+    MotionNamesEnum.DASH,
+    MotionNamesEnum.BACK_STEP,
+    MotionNamesEnum.JUMP,
+    MotionNamesEnum.FOR_JUMP,
+    MotionNamesEnum.BACK_JUMP,
+]
+
+ATTACK_ACTIONS_ALL: list[MotionNamesEnum] = [
+    *PRIMARY_ACTIONS_ATTACK,
+    *SECONDARY_ACTIONS_ATTACK,
+    *TERTIARY_ACTIONS_ATTACK,
+    ULTIMATE_ATTACK,
+]
 class MotionNames:
     NEUTRAL: str = MotionNamesEnum.NEUTRAL.value
     STAND: str = MotionNamesEnum.STAND.value
@@ -176,7 +233,7 @@ class MotionNames:
         AIR_D_DB_BB,
         STAND_D_DF_FC,
     ]
-    
+
     MAPPER: dict[str, int] = {}
     for index, motion_name in enumerate(MOTION_NAMES):
         MAPPER[motion_name] = index

@@ -6,11 +6,6 @@ import numpy as np
 import constants as c
 
 
-class RangeLimit(TypedDict):
-    min: int
-    max: int
-
-
 class MotionHeadersEnum(Enum):
     MOTION_NAME: str = 'motionName'
     FRAME_NUMBER: str = 'frameNumber'
@@ -46,6 +41,21 @@ class MotionHeadersEnum(Enum):
     CONTROL: str = 'control'
     LANDING_FLAG: str = 'landingFlag'
     IMAGE: str = 'Image'
+
+    # NOTE: From here, these are going to be motion names that need to be mapped
+    HIT_BOX_WIDTH: str = 'hitBoxWidth'
+    HIT_BOX_HEIGHT: str = 'hitBoxHeight'
+
+
+from MotionClasses.MotionNames import (
+    MotionNamesEnum,
+)
+
+
+class RangeLimit(TypedDict):
+    motions_names: list[MotionNamesEnum]
+    min: int
+    max: int
 
 
 class MotionHeaders:
@@ -157,44 +167,6 @@ class MotionHeaders:
         CONTROL: 'boolean',
         LANDING_FLAG: 'boolean',
         IMAGE: 'string',
-    }
-
-    # We can also think about making this 0 instead of None
-    HEADER_LIMITS: dict[str, RangeLimit | None] = {
-        MOTION_NAME: None,
-        FRAME_NUMBER: None,
-        SPEED_X: {'min': -100, 'max': 100},  # Arbitrary
-        SPEED_Y: {'min': -100, 'max': 100},  # Arbitrary
-        HIT_AREA_LEFT: {'min': 0, 'max': c.ScreenDimensions.WIDTH},
-        HIT_AREA_RIGHT: {'min': 0, 'max': c.ScreenDimensions.WIDTH},
-        HIT_AREA_UP: {'min': 0, 'max': c.ScreenDimensions.HEIGHT},
-        HIT_AREA_DOWN: {'min': 0, 'max': c.ScreenDimensions.HEIGHT},
-        STATE: None,
-        ATTACK_HIT_AREA_LEFT: {'min': 0, 'max': c.ScreenDimensions.WIDTH},
-        ATTACK_HIT_AREA_RIGHT: {'min': 0, 'max': c.ScreenDimensions.WIDTH},
-        ATTACK_HIT_AREA_UP: {'min': 0, 'max': c.ScreenDimensions.HEIGHT},
-        ATTACK_HIT_AREA_DOWN: {'min': 0, 'max': c.ScreenDimensions.HEIGHT},
-        ATTACK_SPEED_X: {'min': -100, 'max': 100},  # Arbitrary
-        ATTACK_SPEED_Y: {'min': -100, 'max': 100},  # Arbitrary
-        ATTACK_START_UP: None,
-        ATTACK_ACTIVE: None,
-        ATTACK_HIT_DAMAGE: {'min': 0, 'max': c.PLAYER_HP},
-        ATTACK_GUARD_DAMAGE: {'min': 0, 'max': c.PLAYER_HP},
-        ATTACK_START_ADD_ENERGY: {'min': 0, 'max': c.PLAYER_MAX_ENERGY},
-        ATTACK_HIT_ADD_ENERGY: {'min': 0, 'max': c.PLAYER_MAX_ENERGY},
-        ATTACK_GUARD_ADD_ENERGY: {'min': 0, 'max': c.PLAYER_MAX_ENERGY},
-        ATTACK_GIVE_ENERGY: {'min': 0, 'max': c.PLAYER_MAX_ENERGY},
-        ATTACK_IMPACT_X: {'min': -c.ScreenDimensions.WIDTH, 'max': c.ScreenDimensions.WIDTH},
-        ATTACK_IMPACT_Y: {'min': -c.ScreenDimensions.HEIGHT, 'max': c.ScreenDimensions.HEIGHT},
-        ATTACK_GIVE_GUARD_RECOV: {'min': 0, 'max': 150},  # Arbitrary
-        ATTACK_ATTACK_TYPE: None,
-        ATTACK_DOWN_PROP: None,
-        CANCEL_ABLE_FRAME: {'min': -1, 'max': 150},  # Max just high, but will be restricted by its frame number
-        CANCEL_ABLE_MOTION_LEVEL: {'min': -1, 'max': 20},  # Arbitrary
-        MOTION_LEVEL: {'min': 0, 'max': 20},  # Arbitrary
-        CONTROL: None,
-        LANDING_FLAG: None,
-        IMAGE: None,
     }
 
     NUMERICAL_HEADERS: list[str] = []

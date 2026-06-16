@@ -1,10 +1,7 @@
 import asyncio
 import pathlib
 import re
-import uuid
-from datetime import datetime
 from typing import Any
-import os
 
 import numpy as np
 from distributed import Client
@@ -14,9 +11,9 @@ from pymoo.core.variable import Integer
 import constants as c
 import functions as f
 import GeneticAlgorithm.genetic_functions as gf
-from GeneticAlgorithm.meta_space import MetaStateSubset, META_SUBSPACE_COLLECTION
+from GeneticAlgorithm.meta_space import MetaStateSubset, get_limit, RangeLimit
 from MotionClasses.MotionHeaders import MotionHeaders as headers
-from MotionClasses.MotionNames import MotionNames as motion_names
+import GeneticAlgorithm.meta_mapper as meta_mapper
 
 """
     * We need to think about if we are going to use Problem or ElementWiseProblem.
@@ -58,6 +55,10 @@ class IndividualSettings:
 
 def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarray:
     mutated_motions = gf.gene_to_motions(gene=x, motion_coordinates=settings.motion_coordinates)
+    
+    # Invalid genes insta fail
+    if not gf.validate_gene(mutated_motions):
+        return [0, 0, 0]
 
     numerical_differences = np.stack([motion.select_dtypes('number') for motion in mutated_motions])
     uniqueness_reward = gf.constraint_novelty_search(
@@ -141,20 +142,26 @@ class FightingIceProblem(Problem):
         self.experiment_name = f'{meta_subspace.index}_{experiment_name}_{experiment_name_number + 1}'
         print(f'Derived experiment name: {self.experiment_name}')
 
-        self.motion_adjustments: list[tuple[str, str]] = self.meta_space_subset.meta_subspace
+        self.motion_adjustments: list[tuple[str, str]] = meta_mapper.to_meta_subspace(self.meta_space_subset.meta_subspace)
         self.motion_coordinates: np.ndarray = gf.get_motion_coordinates(self.motion_adjustments)
         self.numerical_mapped_motion_coordinates = gf.map_numerical_motion_coordinates(self.motion_adjustments)
         # might not be needed
         self.motion_mapper = f.motion_cord_to_index_bulk(self.motion_coordinates)
 
-        gene_count: int = len(self.motion_adjustments) * 3
+        gene_count: int = len(self.meta_space_subset.meta_subspace) * 3
         xl = np.zeros(shape=gene_count, dtype=np.int64)
         xu = np.zeros(shape=gene_count, dtype=np.int64)
 
         for character_index in range(3):
-            for index, (_, header) in enumerate(self.motion_adjustments):
-                xl[character_index * (gene_count // 3) + index] = headers.HEADER_LIMITS[header]['min']
-                xu[character_index * (gene_count // 3) + index] = headers.HEADER_LIMITS[header]['max']
+            for index, adjustment in enumerate(self.motion_adjustments):
+                limit: RangeLimit = get_limit(
+                    meta_subspace=self.meta_space_subset,
+                    adjustment=adjustment,
+                    character=c.CHARACTER_ORDER[character_index]
+                )
+
+                xl[character_index * (gene_count // 3) + index] = limit['min']
+                xu[character_index * (gene_count // 3) + index] = limit['max']
 
         prob_vars: dict[str, int] = {f'x{i}': Integer(bounds=(xl[i], xu[i])) for i in range(gene_count)}
         super().__init__(

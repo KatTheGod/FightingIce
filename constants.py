@@ -25,6 +25,13 @@ DEFAULT_MOTIONS_PATH: str = os.path.join('data', 'characters')
 MOTIONS_FILE_NAME: str = 'Motion.csv'
 CUSTOM_MOTION_PATH: str = 'custom_motions'
 
+MAX_ATTACK_SPEED_X: int = 25
+MAX_ATTACK_SPEED_Y: int = 15
+MAX_PROJECTILE_FRAME_COUNT: int = 600
+
+MAX_HIT_BOX_WIDTH: int = 300
+MAX_HIT_BOX_HEIGHT: int = 200
+
 class LOGS:
     ENGINES: str = 'engines'
     FRAME_DATA: str = 'frameData'
@@ -34,6 +41,7 @@ class LOGS:
     SOUND: str = 'sound'
     DASK_LOGS: str = 'dask_logs'
     SOLUTION_EXPLORER: str = 'solution_explorer'
+    PLOTS: str = 'plots'
 
     # Experiments related content
     EXPERIMENTS_FOLDER: str = 'experiments'

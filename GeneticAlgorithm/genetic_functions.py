@@ -6,7 +6,6 @@ import pathlib
 import time
 from datetime import datetime
 from itertools import combinations
-import gzip
 
 import numpy as np
 import pandas
@@ -17,12 +16,13 @@ import MotionClasses.MotionEditor as me
 import MotionClasses.MotionHeaders as mh
 import MotionClasses.MotionNames as mn
 from GeneticAlgorithm.FrameData import parse_frame_data
+from GeneticAlgorithm.meta_space import get_limit, MetaStateSubset
 
 
 # According to research, its just euclid distance between objects
 def constraint_novelty_search(
     numerical_motions: np.ndarray,
-    motion_coordinates: np.ndarray,
+    meta_subspace: MetaStateSubset,
     mapped_numerical_motion_coordinates: np.ndarray,
     string_motions: np.ndarray | None,
     boolean_motions: np.ndarray | None,
@@ -58,8 +58,6 @@ def constraint_novelty_search(
         bool_zen_lud_distance = np.linalg.norm((boolean_motions[0] != boolean_motions[2]).astype(int))
         bool_garnet_lud_distance = np.linalg.norm((boolean_motions[1] != boolean_motions[2]).astype(int))
 
-    numerical_normalization: float = me.calculate_theoretical_max_uniqueness(f.numpy_2d_to_tuple(motion_coordinates))
-
     str_normalization: float = (
         1  #
         if string_motions is None
@@ -81,7 +79,7 @@ def constraint_novelty_search(
                     num_garnet_lud_distance,
                 ]
             ),
-            numerical_normalization,
+            meta_subspace.uniqueness_limit,
         )
         # Since we aren't using these yet. Why divide my score by 3 all the time
         # + f.calculate_harmonic_mean(
@@ -351,16 +349,24 @@ def map_numerical_motion_coordinates(motion_adjustments: list[tuple[str, str]]) 
     )
 
 
-def generate_random_gene(motion_adjustments: list[tuple[str, str]]) -> np.ndarray:
+def generate_random_gene(
+    motion_adjustments: list[tuple[str, str]],
+    meta_subspace: MetaStateSubset,
+    character: c.CHARACTERS,
+) -> np.ndarray:
     random_generator: np.random.Generator = np.random.default_rng(seed=1)
 
     header_limits_container = []
-    for _, control_header in motion_adjustments:
-        header_limits = mh.MotionHeaders.HEADER_LIMITS[control_header]
+    for adjustment in motion_adjustments:
+        limit = get_limit(
+            meta_subspace=meta_subspace,
+            adjustment=adjustment,
+            character=character,
+        )
         header_limits_container.append(
             random_generator.integers(
-                low=header_limits['min'],
-                high=header_limits['max'] + 1,
+                low=limit['min'],
+                high=limit['max'] + 1,
                 size=3,
             )
         )
@@ -509,3 +515,57 @@ async def calculate_excitement(experiment_name: str, tanh_scale: float = 3, fram
     frame_data_file.unlink()
 
     return overall_excitement
+
+
+def validate_gene(motions: list[pandas.DataFrame]) -> bool:
+    for motion in motions:
+        frame_number: pandas.Series = motion.loc[:, mh.MotionHeadersEnum.FRAME_NUMBER.value]
+
+        # Rule 1: Timing < frame number -> start up + active
+        attack_up_time: pandas.DataFrame = (
+            motion.loc[:, mh.MotionHeadersEnum.ATTACK_START_UP.value]  #
+            + motion.loc[:, mh.MotionHeadersEnum.ATTACK_ACTIVE.value]
+        )
+        if (attack_up_time > frame_number).any():
+            return False
+
+        # Rule 2: Hit-boxes: right >= left and bottom >= top
+        character_hit_box_horizontal: pandas.Series = (
+            motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_RIGHT.value]  #
+            < motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_LEFT.value]
+        )
+        character_hit_box_vertical: pandas.Series = (
+            motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_DOWN.value]  #
+            < motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_UP.value]
+        )
+
+        attack_hit_box_horizontal: pandas.Series = (
+            motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_RIGHT.value]  #
+            < motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_LEFT.value]
+        )
+        attack_hit_box_vertical: pandas.Series = (
+            motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_DOWN.value]  #
+            < motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_UP.value]
+        )
+
+        if (
+            character_hit_box_horizontal.any()  #
+            or character_hit_box_vertical.any()
+            or attack_hit_box_horizontal.any()
+            or attack_hit_box_vertical.any()
+        ):
+            return False
+
+        # Rule 3: If cancellable frame, then shouldn't have cancellable frame motion
+        motion_non_cancellable_indices: pandas.Series = motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME.value] == -1
+        if (motion[motion_non_cancellable_indices].loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_MOTION_LEVEL.value] != -1).any():
+            return False
+
+        # Rule 4: Cancel able frame number < frame number
+        if (
+            motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME.value]  #
+            >= frame_number
+        ).any():
+            return False
+
+    return True

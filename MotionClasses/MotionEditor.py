@@ -147,7 +147,7 @@ DEFAULT_LUD_MOTION: pandas.DataFrame = read_motion_file(
 )
 
 # If you ever change the order here, you might be killing other code...
-DEFAULT_MOTION_LIST = [
+DEFAULT_MOTION_LIST: list[pandas.DataFrame] = [
     DEFAULT_ZEN_MOTION,
     DEFAULT_GARNET_MOTION,
     DEFAULT_LUD_MOTION,
@@ -155,44 +155,10 @@ DEFAULT_MOTION_LIST = [
 
 NUMERICAL_SHAPE = DEFAULT_ZEN_MOTION.select_dtypes('number').shape
 
-
-class ConstraintInformation:
-    utilized_numerical_cols: list[int] = []
-
-    # We are going to select the cols that are in use (not NONE) and not the index col as well
-    theoretical_max_numerical_range: np.ndarray = np.zeros(shape=c.MotionData.cols)
-
-    for index, header_limits in enumerate(headers.HEADER_LIMITS.values()):
-        # We are basically ignoring the index col, motion name
-        if index == 0:
-            continue
-
-        # if header_limits is not None:
-        # Minus 1 to take into account the header being an index
-        theoretical_max_numerical_range[index - 1] = (
-            header_limits['max'] - header_limits['min']  #
-            if header_limits is not None
-            else 0
-        )
-
-    THEORETICAL_MAX_NUMERICAL_UNIQUENESS_SINGLE_ROW: float = np.linalg.norm(theoretical_max_numerical_range)
-
-
-@lru_cache(maxsize=5)
-def calculate_theoretical_max_uniqueness(motion_coordinates_tuple: tuple) -> float:
-    motion_coordinates = np.array(motion_coordinates_tuple)
-
-    picked_theoretical_numerical_range = np.zeros(
-        shape=(c.MotionData.rows, ConstraintInformation.theoretical_max_numerical_range.shape[0]),
-        dtype=ConstraintInformation.theoretical_max_numerical_range.dtype,
-    )
-
-    rows = motion_coordinates[:, 0]
-    cols = motion_coordinates[:, 1]
-    repeated_theoretical_max_numerical_range = np.tile(ConstraintInformation.theoretical_max_numerical_range, (c.MotionData.rows, 1))
-    picked_theoretical_numerical_range[rows, cols] = repeated_theoretical_max_numerical_range[rows, cols]
-    norm = np.linalg.norm(picked_theoretical_numerical_range)
-    return norm
+MAX_FRAME_NUMBERS: pandas.Series = pandas.Series(
+    np.vstack([motion.loc[:, headers.FRAME_NUMBER].to_numpy() for motion in DEFAULT_MOTION_LIST]).max(axis=0),
+    index=DEFAULT_ZEN_MOTION.index,
+)
 
 
 class MotionEditor:
