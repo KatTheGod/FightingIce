@@ -8,6 +8,7 @@ err/
 dask_logs/
 solution_explorer/logs/*
 experiments/round_robin
+plots/
 ######
 
 # Byte-compiled / optimized / DLL files
