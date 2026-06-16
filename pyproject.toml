@@ -3,25 +3,38 @@ extend-exclude = ["venv", ".venv", "log", "__pycache__", "build", "dist"]
 line-length = 150
 
 [tool.ruff.lint]
-# E = Error, F = Pyflakes, I = Import sorting, UP = PyUpgrade
-select = [
-    "E",
-    "F",
-    "I",
-    "UP",
-    "PL",
-    "B",
-    "ANN", # Type annotations (forces you to define inputs/outputs)
-    "ARG", # Force me to not use global variables in function calls,
-    "FA", #Future Annotations
-    "PYI", #Typing stubs
+select = ["ALL"]
+ignore = [
+    "PLR2044",
+    "TRY003",
+    "COM812",
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D205",
+    "D208",
+    "D212",
+    "D214",
+    "D405",
+    "D413",
+    "EM101",
+    "EM102",
+    "E501",
+    "ICN001",
+    "N813",
+    "T201",
+    "TD002",
+    "TD003",
+    # "I101"   
 ]
-ignore = ["PLR2044", "E501"]
 fixable = ["ALL"]
 
 [tool.ruff.format]
 # You can still have it look like Black, but with your tweaks
-quote-style = "single"
+quote-style = "double"
 indent-style = "space"
 
 [tool.ruff.lint.flake8-annotations]

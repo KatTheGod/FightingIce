@@ -10,10 +10,13 @@ from pymoo.core.variable import Integer
 
 import constants as c
 import functions as f
-import GeneticAlgorithm.genetic_functions as gf
-from GeneticAlgorithm.meta_space import MetaStateSubset, get_limit, RangeLimit
-from MotionClasses.MotionHeaders import MotionHeaders as headers
-import GeneticAlgorithm.meta_mapper as meta_mapper
+import genetic_algorithm.genetic_functions as gf
+from genetic_algorithm import meta_mapper
+from genetic_algorithm.meta_space import (
+    MetaStateSubset,
+    RangeLimit,
+    get_limit,
+)
 
 """
     * We need to think about if we are going to use Problem or ElementWiseProblem.
@@ -55,12 +58,12 @@ class IndividualSettings:
 
 def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarray:
     mutated_motions = gf.gene_to_motions(gene=x, motion_coordinates=settings.motion_coordinates)
-    
+
     # Invalid genes insta fail
     if not gf.validate_gene(mutated_motions):
         return [0, 0, 0]
 
-    numerical_differences = np.stack([motion.select_dtypes('number') for motion in mutated_motions])
+    numerical_differences = np.stack([motion.select_dtypes("number") for motion in mutated_motions])
     uniqueness_reward = gf.constraint_novelty_search(
         numerical_motions=numerical_differences,
         motion_coordinates=settings.motion_coordinates,
@@ -86,7 +89,7 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
                 ],
                 reps=3,
             ).reshape(3, -1),
-        )
+        ),
     )
 
     excitement = asyncio.run(gf.calculate_excitement(amended_experiment_name, frame_window=10))
@@ -132,15 +135,15 @@ class FightingIceProblem(Problem):
 
         # Going to adjust the experiment name if its already in use
         pathlib.Path(c.CUSTOM_MOTION_PATH).mkdir(parents=True, exist_ok=True)
-        experiment_name_regex = re.compile(rf'{self.meta_space_subset.index}_{experiment_name}_(\d+).*')
+        experiment_name_regex = re.compile(rf"{self.meta_space_subset.index}_{experiment_name}_(\d+).*")
         experiment_name_number: int = -1
         for directory in pathlib.Path(c.CUSTOM_MOTION_PATH).iterdir():
             match = experiment_name_regex.match(directory.name)
             if match:
                 experiment_name_number = max(-1, int(match.group(1)))
 
-        self.experiment_name = f'{meta_subspace.index}_{experiment_name}_{experiment_name_number + 1}'
-        print(f'Derived experiment name: {self.experiment_name}')
+        self.experiment_name = f"{meta_subspace.index}_{experiment_name}_{experiment_name_number + 1}"
+        print(f"Derived experiment name: {self.experiment_name}")
 
         self.motion_adjustments: list[tuple[str, str]] = meta_mapper.to_meta_subspace(self.meta_space_subset.meta_subspace)
         self.motion_coordinates: np.ndarray = gf.get_motion_coordinates(self.motion_adjustments)
@@ -157,13 +160,13 @@ class FightingIceProblem(Problem):
                 limit: RangeLimit = get_limit(
                     meta_subspace=self.meta_space_subset,
                     adjustment=adjustment,
-                    character=c.CHARACTER_ORDER[character_index]
+                    character=c.CHARACTER_ORDER_REVERSE[character_index],
                 )
 
-                xl[character_index * (gene_count // 3) + index] = limit['min']
-                xu[character_index * (gene_count // 3) + index] = limit['max']
+                xl[character_index * (gene_count // 3) + index] = limit.min
+                xu[character_index * (gene_count // 3) + index] = limit.max
 
-        prob_vars: dict[str, int] = {f'x{i}': Integer(bounds=(xl[i], xu[i])) for i in range(gene_count)}
+        prob_vars: dict[str, int] = {f"x{i}": Integer(bounds=(xl[i], xu[i])) for i in range(gene_count)}
         super().__init__(
             elementwise=False,
             **kwargs,
@@ -196,19 +199,19 @@ class FightingIceProblem(Problem):
             evaluate_individual,
             X,
             settings=eval_settings,
-            resources={'cores': self.engine_multiplier * 3},
+            resources={"cores": self.engine_multiplier * 3},
         )
 
         results = self.client.gather(futures)
 
-        out['F'] = np.array(results, dtype=np.float64)
+        out["F"] = np.array(results, dtype=np.float64)
 
     # These 2 are for when pymoo makes a copy of this object.
     # It will try to copy the client, but thats an object that can't be copied.
     def __getstate__(self) -> dict:
         state = self.__dict__.copy()
-        if 'client' in state:
-            del state['client']
+        if "client" in state:
+            del state["client"]
         return state
 
     def __setstate__(self, state: dict) -> None:

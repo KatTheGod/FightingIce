@@ -1,5 +1,5 @@
 """
-    NOTE
+    NOTE:
         This file is going to be used for experiments, instead of using jupyter.
 
     Experiments:
@@ -7,6 +7,6 @@
         New Limit Structure ❓
 """
 
-from GeneticAlgorithm.meta_space import basicStandA_B
+from genetic_algorithm import meta_space
 
-print("passed")
+print(meta_space.DAMAGE.uniqueness_limit)

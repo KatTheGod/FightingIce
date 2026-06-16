@@ -8,15 +8,15 @@ from datetime import datetime
 from itertools import combinations
 
 import numpy as np
-import pandas
+import pandas as pd
 
 import constants as c
 import functions as f
-import MotionClasses.MotionEditor as me
-import MotionClasses.MotionHeaders as mh
-import MotionClasses.MotionNames as mn
-from GeneticAlgorithm.FrameData import parse_frame_data
-from GeneticAlgorithm.meta_space import get_limit, MetaStateSubset
+import motion_classes.motion_editor as me
+import motion_classes.motion_headers as mh
+import motion_classes.motion_names as mn
+from genetic_algorithm.frame_data import parse_frame_data
+from genetic_algorithm.meta_space import MetaStateSubset, get_limit
 
 
 # According to research, its just euclid distance between objects
@@ -77,7 +77,7 @@ def constraint_novelty_search(
                     num_zen_garnet_distance,
                     num_zen_lud_distance,
                     num_garnet_lud_distance,
-                ]
+                ],
             ),
             meta_subspace.uniqueness_limit,
         )
@@ -112,32 +112,32 @@ async def wait_for_file(
     timeout: int = 10,
 ) -> pathlib.Path | None:
     if c.BASE_PATH is not None:
-        file_path: pathlib.Path = pathlib.Path(os.path.join(c.BASE_PATH, 'log', log_group))
+        file_path: pathlib.Path = pathlib.Path(os.path.join(c.BASE_PATH, "log", log_group))
     else:
-        file_path: pathlib.Path = pathlib.Path(os.path.join('log', log_group))
+        file_path: pathlib.Path = pathlib.Path(os.path.join("log", log_group))
 
     start_poll = time.time()
-    time_str = datetime.now().strftime('%H:%M:%S')
+    time_str = datetime.now().strftime("%H:%M:%S")
 
-    print(f'looking for {experiment_name} at {time_str}')
+    print(f"looking for {experiment_name} at {time_str}")
     while time.time() - start_poll < timeout:
-        file: pathlib.Path | None = next(file_path.glob(f'*{experiment_name}*.{extension}'), None)
+        file: pathlib.Path | None = next(file_path.glob(f"*{experiment_name}*.{extension}"), None)
         if file is not None:
             return file
 
         await asyncio.sleep(1)
 
-    time_str = datetime.now().strftime('%H:%M:%S')
-    print(f'Failed at {time_str}')
+    time_str = datetime.now().strftime("%H:%M:%S")
+    print(f"Failed at {time_str}")
     return None
 
 
 async def wait_for_point_file(experiment_name: str, timeout: int = 10) -> pathlib.Path | None:
-    return await wait_for_file(experiment_name, c.LOGS.POINT, 'csv', timeout=timeout)
+    return await wait_for_file(experiment_name, c.LOGS.POINT, "csv", timeout=timeout)
 
 
 async def wait_for_df_file(experiment_name: str, timeout: int = 10) -> pathlib.Path | None:
-    return await wait_for_file(experiment_name, c.LOGS.FRAME_DATA, 'json', timeout=timeout)
+    return await wait_for_file(experiment_name, c.LOGS.FRAME_DATA, "json", timeout=timeout)
 
 
 """
@@ -147,7 +147,7 @@ async def wait_for_df_file(experiment_name: str, timeout: int = 10) -> pathlib.P
 
 
 async def orchestrate_matches(
-    mutated_motions: list[pandas.DataFrame],
+    mutated_motions: list[pd.DataFrame],
     no_matches: int,
     experiment_name: str,
     engine_multiplier: int,
@@ -166,7 +166,7 @@ async def orchestrate_matches(
         os.path.join(
             c.CUSTOM_MOTION_PATH,
             experiment_name,
-            f'{character_name.lower()}.csv',
+            f"{character_name.lower()}.csv",
         )  #
         for character_name in c.CHARACTER_ORDER.keys()
     ]
@@ -177,7 +177,7 @@ async def orchestrate_matches(
             path=path,
         )
 
-    argument_for_custom_motions: np.ndarray = np.full(shape=(3, 6), dtype=object, fill_value='')
+    argument_for_custom_motions: np.ndarray = np.full(shape=(3, 6), dtype=object, fill_value="")
     character_order_combinations: list[tuple[int, int]] = list(combinations([0, 1, 2], 2))
     # character_order_combinations: list[tuple[int, int]] = [
     #     (0, 2),
@@ -187,36 +187,36 @@ async def orchestrate_matches(
     for index, combination in enumerate(character_order_combinations):
         argument_for_custom_motions[index, :] = np.array(
             [
-                '--config-path',
-                '2',
+                "--config-path",
+                "2",
                 c.CHARACTER_ORDER_REVERSE[combination[0]],
                 custom_motion_paths[combination[0]],
                 c.CHARACTER_ORDER_REVERSE[combination[1]],
                 custom_motion_paths[combination[1]],
-            ]
+            ],
         )
 
     common_commands = [
-        'java',
-        '-cp',
-        os.pathsep.join(['dare.jar', '.']),
-        'Main',
-        '--limithp',
+        "java",
+        "-cp",
+        os.pathsep.join(["dare.jar", "."]),
+        "Main",
+        "--limithp",
         str(c.PLAYER_HP),
         str(c.PLAYER_HP),
-        '-df',
-        '-r',
-        '1',
-        '-f',
+        "-df",
+        "-r",
+        "1",
+        "-f",
         str(c.GAME_DURATION_SEC * 60),
-        '--time-stamp',
+        "--time-stamp",
         c.GAME_TIME,
-        *(['--headless-mode'] if not visual else []),
-        *(['--lightweight-mode'] if not visual else []),
-        '--pyftg-mode',
+        *(["--headless-mode"] if not visual else []),
+        *(["--lightweight-mode"] if not visual else []),
+        "--pyftg-mode",
     ]
 
-    os.makedirs(os.path.join('log', 'engines'), exist_ok=True)
+    os.makedirs(os.path.join("log", "engines"), exist_ok=True)
 
     characters = [
         character_name  #
@@ -262,11 +262,11 @@ async def orchestrate_matches(
 
     point_csv: pathlib.Path | None = await wait_for_point_file(experiment_name)
     if point_csv is None:
-        raise FileExistsError(f'Glob failed to fined experiment | {point_csv} | in folder')
+        raise FileExistsError(f"Glob failed to fined experiment | {point_csv} | in folder")
     if not point_csv.exists():
         raise FileExistsError(f"Point file | {point_csv} | doesn't exist folder")
 
-    point_df: pandas.DataFrame = f.read_match_results(point_csv)
+    point_df: pd.DataFrame = f.read_match_results(point_csv)
     pairing_index = point_df[[c.PointHeaderNames.INSTANCE]].to_numpy()
 
     hp_diff_zen_garnet = point_df[pairing_index % 3 == 0][[c.PointHeaderNames.HP_ONE, c.PointHeaderNames.HP_TWO]].to_numpy().astype(np.int16)
@@ -292,7 +292,7 @@ async def orchestrate_matches(
             zen_win_rate,
             garnet_win_rate,
             lud_win_rate,
-        ]
+        ],
     )
 
     return win_rates
@@ -305,7 +305,7 @@ async def orchestrate_matches(
     )
 
 
-def gene_to_motions(gene: np.ndarray, motion_coordinates: np.ndarray) -> list[pandas.DataFrame]:
+def gene_to_motions(gene: np.ndarray, motion_coordinates: np.ndarray) -> list[pd.DataFrame]:
     mutated_motions = [motion.copy() for motion in me.DEFAULT_MOTION_LIST]
 
     adjustments = gene.reshape(3, -1).copy()
@@ -327,11 +327,11 @@ def get_motion_coordinates(motion_adjustments: list[tuple[str, str]]) -> np.ndar
     return np.array(
         [
             [
-                mn.MotionNames.MOTION_NAMES.index(motion),
+                list(mn.MotionNamesEnum).index(motion),
                 mh.MotionHeaders.HEADERS.index(header),
             ]
             for motion, header in motion_adjustments
-        ]
+        ],
     )
 
 
@@ -341,11 +341,11 @@ def map_numerical_motion_coordinates(motion_adjustments: list[tuple[str, str]]) 
     return np.array(
         [
             [
-                mn.MotionNames.MAPPER[motion],
+                mn.MAPPER[motion],
                 mh.MotionHeaders.MAPPER[mh.MotionHeaders.HEADERS.index(header)] + 1,
             ]
             for motion, header in motion_adjustments
-        ]
+        ],
     )
 
 
@@ -365,10 +365,10 @@ def generate_random_gene(
         )
         header_limits_container.append(
             random_generator.integers(
-                low=limit['min'],
-                high=limit['max'] + 1,
+                low=limit.min,
+                high=limit.max + 1,
                 size=3,
-            )
+            ),
         )
 
     return np.stack(header_limits_container).T.flatten()
@@ -384,14 +384,14 @@ def calculate_win_probabilities(
 ) -> list[np.ndarray]:
     full_file_path: pathlib.Path = pathlib.Path(
         os.path.join(
-            'log',
+            "log",
             c.LOGS.FRAME_DATA,
             data_frame_file_name,
-        )
+        ),
     )
 
     if not full_file_path.exists():
-        raise FileNotFoundError(f"File: {str(full_file_path)} doesn't exist")
+        raise FileNotFoundError(f"File: {full_file_path!s} doesn't exist")
 
     frame_data_json: list[dict[str, any]]
     with open(str(full_file_path)) as file:
@@ -416,13 +416,13 @@ def calculate_win_probabilities(
             p1_hp, p2_hp = frame.hitPoints
             p1_energy, p2_energy = frame.energy
 
-            if p1_hp <= 0 and p2_hp <= 0 or index == 0:
+            if (p1_hp <= 0 and p2_hp <= 0) or index == 0:
                 win_probabilities[index] = 0.5
                 continue
-            elif p1_hp <= 0:
+            if p1_hp <= 0:
                 win_probabilities[index] = 0
                 continue
-            elif p2_hp <= 0:
+            if p2_hp <= 0:
                 win_probabilities[index] = 1
                 continue
 
@@ -506,7 +506,7 @@ async def calculate_excitement(experiment_name: str, tanh_scale: float = 3, fram
     frame_data_file: pathlib.Path | None = await wait_for_df_file(experiment_name)
 
     if frame_data_file is None or not frame_data_file.exists():
-        raise FileNotFoundError(f'cant find the consolidated point file: *{experiment_name}*.json')
+        raise FileNotFoundError(f"cant find the consolidated point file: *{experiment_name}*.json")
 
     win_probabilities = calculate_win_probabilities(frame_data_file.name, frame_window=frame_window)
     overall_excitement: float = calculate_entropy_score(win_probabilities, frame_window=frame_window, tanh_scale=tanh_scale)
@@ -517,35 +517,35 @@ async def calculate_excitement(experiment_name: str, tanh_scale: float = 3, fram
     return overall_excitement
 
 
-def validate_gene(motions: list[pandas.DataFrame]) -> bool:
+def validate_gene(motions: list[pd.DataFrame]) -> bool:
     for motion in motions:
-        frame_number: pandas.Series = motion.loc[:, mh.MotionHeadersEnum.FRAME_NUMBER.value]
+        frame_number: pd.Series = motion.loc[:, mh.MotionHeadersEnum.FRAME_NUMBER]
 
         # Rule 1: Timing < frame number -> start up + active
-        attack_up_time: pandas.DataFrame = (
-            motion.loc[:, mh.MotionHeadersEnum.ATTACK_START_UP.value]  #
-            + motion.loc[:, mh.MotionHeadersEnum.ATTACK_ACTIVE.value]
+        attack_up_time: pd.DataFrame = (
+            motion.loc[:, mh.MotionHeadersEnum.ATTACK_START_UP]  #
+            + motion.loc[:, mh.MotionHeadersEnum.ATTACK_ACTIVE]
         )
         if (attack_up_time > frame_number).any():
             return False
 
         # Rule 2: Hit-boxes: right >= left and bottom >= top
-        character_hit_box_horizontal: pandas.Series = (
-            motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_RIGHT.value]  #
-            < motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_LEFT.value]
+        character_hit_box_horizontal: pd.Series = (
+            motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_RIGHT]  #
+            < motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_LEFT]
         )
-        character_hit_box_vertical: pandas.Series = (
-            motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_DOWN.value]  #
-            < motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_UP.value]
+        character_hit_box_vertical: pd.Series = (
+            motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_DOWN]  #
+            < motion.loc[:, mh.MotionHeadersEnum.HIT_AREA_UP]
         )
 
-        attack_hit_box_horizontal: pandas.Series = (
-            motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_RIGHT.value]  #
-            < motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_LEFT.value]
+        attack_hit_box_horizontal: pd.Series = (
+            motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_RIGHT]  #
+            < motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_LEFT]
         )
-        attack_hit_box_vertical: pandas.Series = (
-            motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_DOWN.value]  #
-            < motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_UP.value]
+        attack_hit_box_vertical: pd.Series = (
+            motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_DOWN]  #
+            < motion.loc[:, mh.MotionHeadersEnum.ATTACK_HIT_AREA_UP]
         )
 
         if (
@@ -557,13 +557,13 @@ def validate_gene(motions: list[pandas.DataFrame]) -> bool:
             return False
 
         # Rule 3: If cancellable frame, then shouldn't have cancellable frame motion
-        motion_non_cancellable_indices: pandas.Series = motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME.value] == -1
-        if (motion[motion_non_cancellable_indices].loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_MOTION_LEVEL.value] != -1).any():
+        motion_non_cancellable_indices: pd.Series = motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME] == -1
+        if (motion[motion_non_cancellable_indices].loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_MOTION_LEVEL] != -1).any():
             return False
 
         # Rule 4: Cancel able frame number < frame number
         if (
-            motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME.value]  #
+            motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME]  #
             >= frame_number
         ).any():
             return False

@@ -15,53 +15,54 @@ from pymoo.util.ref_dirs import get_reference_directions
 
 import constants as c
 import functions as f
-from GeneticAlgorithm.FightingIceProblem import FightingIceProblem
+from genetic_algorithm import meta_space
+from genetic_algorithm.fighting_ice_problem import FightingIceProblem
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     f.set_random_seeds(c.GLOBAL_SEED)
     f.arg_parser()
 
     if c.SCHEDULER_FILE is not None:
         if not pathlib.Path(c.SCHEDULER_FILE).exists():
-            raise FileNotFoundError(f'Missing file: {c.SCHEDULER_FILE}.\nCannot start job at all')
+            raise FileNotFoundError(f"Missing file: {c.SCHEDULER_FILE}.\nCannot start job at all")
 
-        print('--- Running with Scheduler File ---')
+        print("--- Running with Scheduler File ---")
         client = Client(scheduler_file=c.SCHEDULER_FILE)
 
-        print('Waiting for workers to report for duty...')
+        print("Waiting for workers to report for duty...")
         client.wait_for_workers(n_workers=c.NODES, timeout=30)
-        print('Cluster is fully populated. Starting Evolution.')
+        print("Cluster is fully populated. Starting Evolution.")
     else:
-        print('--- Running with LocalCluster ---')
+        print("--- Running with LocalCluster ---")
 
         core_count: int = c.CORES // c.NODES
         cluster = LocalCluster(
             n_workers=c.NODES,
             threads_per_worker=core_count,
-            resources={'cores': core_count},
+            resources={"cores": core_count},
         )
 
         client = Client(cluster)
 
-    print(f'Dask Dashboard available at: {client.dashboard_link}')
-    # experiment_name: str = 'cb_ex_uq_p10_n5_e4_g8_energy'
-    experiment_name: str = 'fitness_over_time_test'
+    print(f"Dask Dashboard available at: {client.dashboard_link}")
+    experiment_name: str = "meta-space-testers"
 
     try:
         previous_result = f.resume_algorithm(None)
 
         start_time = time.perf_counter()
         if previous_result is None:
-            print('New experiment')
+            print("New experiment")
             current_gen_count: int = 0
             problem = FightingIceProblem(
                 experiment_name=experiment_name,
                 dask_client=client,
-                engine_multiplier=4,
-                no_matches=8,
+                engine_multiplier=1,
+                no_matches=1,
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
+                meta_subspace=meta_space.BASIC_STAND_A_B,
             )
 
             res = minimize(
@@ -74,12 +75,12 @@ if __name__ == '__main__':
                         # n_dim=3,
                         # n_partitions=10,
                         n_dim=2,
-                        n_partitions=49,
+                        n_partitions=9,
                     ),
                     # Magic number is 20
-                    n_neighbors=15,
+                    n_neighbors=3,
                     decomposition=PBI(theta=10),
-                    sampling=IntegerRandomSampling(seed=c.GLOBAL_SEED),
+                    sampling=IntegerRandomSampling(),
                     crossover=SBX(prob=1.0, eta=20, vtype=int),
                     mutation=PolynomialMutation(prob=1.0, eta=20, vtype=int),
                 ),
@@ -95,7 +96,7 @@ if __name__ == '__main__':
                 verbose=True,
             )
         else:
-            print('Continuing experiment')
+            print("Continuing experiment")
             problem: FightingIceProblem = previous_result.problem
             algorithm: Algorithm = previous_result.algorithm
 
@@ -125,9 +126,9 @@ if __name__ == '__main__':
         )
 
         end_time = time.perf_counter()
-        print(f'time: {end_time - start_time}')
+        print(f"time: {end_time - start_time}")
 
-        with open(f'{experiment_name}.pkl', 'wb') as res_file:
+        with pathlib.Path.open(f"{experiment_name}.pkl", "wb") as res_file:
             dill.dump(res, res_file)
     finally:
         client.shutdown()

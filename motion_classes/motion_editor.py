@@ -1,26 +1,26 @@
 import os
 import pathlib
-from functools import lru_cache
 
 import numpy as np
-import pandas
+import pandas as pd
 
 import constants as c
-from MotionClasses.MotionHeaders import MotionHeaders as headers
-from MotionClasses.MotionNames import MotionNames as motion_names
+from motion_classes.motion_headers import MotionHeaders
+from motion_classes.motion_headers import MotionHeadersEnum as headers
+from motion_classes.motion_names import MotionNamesEnum
 
 
-def read_motion_file(motion_path: str) -> pandas.DataFrame:
-    return pandas.read_csv(
+def read_motion_file(motion_path: str) -> pd.DataFrame:
+    return pd.read_csv(
         filepath_or_buffer=motion_path,
         index_col=headers.MOTION_NAME,
-        true_values=['TRUE'],
-        false_values=['FALSE'],
-        dtype=headers.D_TYPE,
+        true_values=["TRUE"],
+        false_values=["FALSE"],
+        dtype=MotionHeaders.D_TYPE,
     )
 
 
-def get_motion_difference(motion_original: pandas.DataFrame, motion_custom: pandas.DataFrame) -> pandas.DataFrame:
+def get_motion_difference(motion_original: pd.DataFrame, motion_custom: pd.DataFrame) -> pd.DataFrame:
     return motion_original.compare(
         motion_custom,
         keep_equal=True,
@@ -28,7 +28,7 @@ def get_motion_difference(motion_original: pandas.DataFrame, motion_custom: pand
     )
 
 
-def get_motion_difference_path(motion_original_path: str, motion_custom_path: str) -> pandas.DataFrame:
+def get_motion_difference_path(motion_original_path: str, motion_custom_path: str) -> pd.DataFrame:
     motion_original = read_motion_file(motion_original_path)
     motion_custom = read_motion_file(motion_custom_path)
 
@@ -39,27 +39,27 @@ def get_character_default_motion_path(character_name: str) -> str:
     return os.path.join(
         c.DEFAULT_MOTIONS_PATH,
         character_name,
-        'Motion.csv',
+        "Motion.csv",
     )
 
 
-def get_motion_diffs(character_name: str, motions: list[pandas.DataFrame]) -> pandas.DataFrame | None:
+def get_motion_diffs(character_name: str, motions: list[pd.DataFrame]) -> pd.DataFrame | None:
     if len(motions) == 0:
         return None
 
     default_motion = read_motion_file(get_character_default_motion_path(character_name))
-    motion_diffs = pandas.concat(
+    motion_diffs = pd.concat(
         [get_motion_difference(default_motion, motion) for motion in motions],
         keys=range(len(motions)),
         names=[c.PointHeaderNames.SIMULATION_NUMBER, headers.MOTION_NAME],
     )
 
-    other = motion_diffs.xs('other', level=1, axis=1)
-    selves = motion_diffs.xs('self', level=1, axis=1)
+    other = motion_diffs.xs("other", level=1, axis=1)
+    selves = motion_diffs.xs("self", level=1, axis=1)
 
-    numerical_diffs = other.select_dtypes(include='number') - selves.select_dtypes(include='number')
+    numerical_diffs = other.select_dtypes(include="number") - selves.select_dtypes(include="number")
     # print(numerical_diffs)
-    # with pandas.option_context('display.max_rows', None, 'display.max_columns', None):
+    # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
     # print(numerical_diffs)
     clean_numerical_diffs = numerical_diffs.loc[:, (numerical_diffs != 0).any()]
 
@@ -71,20 +71,20 @@ def get_motion_diffs(character_name: str, motions: list[pandas.DataFrame]) -> pa
     return clean_numerical_diffs
 
 
-def get_non_0_motion_name_in_diff(motion_diff: pandas.DataFrame, header: str) -> str:
+def get_non_0_motion_name_in_diff(motion_diff: pd.DataFrame, header: str) -> str:
     mask = motion_diff[header] != 0
     return motion_diff[mask].index.get_level_values(1).unique().tolist().pop()
 
 
 def modify_motion(
-    original_motion: pandas.DataFrame,
-    motion: pandas.DataFrame,
+    original_motion: pd.DataFrame,
+    motion: pd.DataFrame,
     percentage: float,
     headers_subset: list[str],
     motion_names_subset: list[str] | None = None,
 ) -> None:
     selected_motions_list = (
-        motion_names.MOTION_NAMES  #
+        list(MotionNamesEnum)  #
         if motion_names_subset is None
         else motion_names_subset
     )
@@ -100,19 +100,19 @@ def modify_motion(
             * percentage
         )
         .round()
-        .astype('int16')
+        .astype("int16")
     )
 
 
 def save_custom_motion(
-    motion: pandas.DataFrame,
+    motion: pd.DataFrame,
     path: str,
 ) -> None:
     motion_custom_copy = motion.copy()
 
-    motion_custom_copy[headers.ATTACK_DOWN_PROP] = motion_custom_copy[headers.ATTACK_DOWN_PROP].map({True: 'TRUE', False: 'FALSE'})
-    motion_custom_copy[headers.CONTROL] = motion_custom_copy[headers.CONTROL].map({True: 'TRUE', False: 'FALSE'})
-    motion_custom_copy[headers.LANDING_FLAG] = motion_custom_copy[headers.LANDING_FLAG].map({True: 'TRUE', False: 'FALSE'})
+    motion_custom_copy[headers.ATTACK_DOWN_PROP] = motion_custom_copy[headers.ATTACK_DOWN_PROP].map({True: "TRUE", False: "FALSE"})
+    motion_custom_copy[headers.CONTROL] = motion_custom_copy[headers.CONTROL].map({True: "TRUE", False: "FALSE"})
+    motion_custom_copy[headers.LANDING_FLAG] = motion_custom_copy[headers.LANDING_FLAG].map({True: "TRUE", False: "FALSE"})
 
     pathlib.Path(path).parent.mkdir(
         parents=True,
@@ -122,40 +122,40 @@ def save_custom_motion(
     motion_custom_copy.to_csv(path)
 
 
-DEFAULT_ZEN_MOTION: pandas.DataFrame = read_motion_file(
+DEFAULT_ZEN_MOTION: pd.DataFrame = read_motion_file(
     os.path.join(
         c.DEFAULT_MOTIONS_PATH,
-        c.CHARACTERS.ZEN.value,
+        c.CHARACTERS.ZEN,
         c.MOTIONS_FILE_NAME,
-    )
+    ),
 )
 
-DEFAULT_GARNET_MOTION: pandas.DataFrame = read_motion_file(
+DEFAULT_GARNET_MOTION: pd.DataFrame = read_motion_file(
     os.path.join(
         c.DEFAULT_MOTIONS_PATH,
-        c.CHARACTERS.GARNET.value,
+        c.CHARACTERS.GARNET,
         c.MOTIONS_FILE_NAME,
-    )
+    ),
 )
 
-DEFAULT_LUD_MOTION: pandas.DataFrame = read_motion_file(
+DEFAULT_LUD_MOTION: pd.DataFrame = read_motion_file(
     os.path.join(
         c.DEFAULT_MOTIONS_PATH,
-        c.CHARACTERS.LUD.value,
+        c.CHARACTERS.LUD,
         c.MOTIONS_FILE_NAME,
-    )
+    ),
 )
 
 # If you ever change the order here, you might be killing other code...
-DEFAULT_MOTION_LIST: list[pandas.DataFrame] = [
+DEFAULT_MOTION_LIST: list[pd.DataFrame] = [
     DEFAULT_ZEN_MOTION,
     DEFAULT_GARNET_MOTION,
     DEFAULT_LUD_MOTION,
 ]
 
-NUMERICAL_SHAPE = DEFAULT_ZEN_MOTION.select_dtypes('number').shape
+NUMERICAL_SHAPE = DEFAULT_ZEN_MOTION.select_dtypes("number").shape
 
-MAX_FRAME_NUMBERS: pandas.Series = pandas.Series(
+MAX_FRAME_NUMBERS: pd.Series = pd.Series(
     np.vstack([motion.loc[:, headers.FRAME_NUMBER].to_numpy() for motion in DEFAULT_MOTION_LIST]).max(axis=0),
     index=DEFAULT_ZEN_MOTION.index,
 )
@@ -171,9 +171,9 @@ class MotionEditor:
         self.custom_motion_path = custom_motion_path
 
         default_motion_file_path: str = get_character_default_motion_path(character_name)
-        self.motion_default: pandas.DataFrame = read_motion_file(default_motion_file_path)
+        self.motion_default: pd.DataFrame = read_motion_file(default_motion_file_path)
 
-        self.motion_custom: pandas.DataFrame = (
+        self.motion_custom: pd.DataFrame = (
             read_motion_file(custom_motion_path)  #
             if custom_motion_path is not None and os.path.exists(custom_motion_path)
             else read_motion_file(default_motion_file_path)

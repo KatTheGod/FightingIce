@@ -1,6 +1,6 @@
 import datetime
 import os
-from enum import Enum
+from enum import StrEnum
 
 GLOBAL_SEED: int = 42
 
@@ -60,7 +60,7 @@ class LOGS:
 GAME_TIME: str = datetime.datetime.now().strftime('%Y.%m.%d_%H.%M.%S')
 
 
-class CHARACTERS(Enum):
+class CHARACTERS(StrEnum):
     ZEN: str = 'ZEN'
     GARNET: str = 'GARNET'
     LUD: str = 'LUD'

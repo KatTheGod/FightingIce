@@ -1,12 +1,12 @@
 import logging
 import random
 
-import pandas
+import pandas as pd
+from pyftg import AIInterface, AudioData, CommandCenter, FrameData, GameData, Key, RoundResult, ScreenData
 from pyftg.models.character_data import CharacterData
 
-from MotionClasses.MotionHeaders import MotionHeaders as headers
-from MotionClasses.MotionNames import MotionNames as motion_names
-from pyftg import AIInterface, AudioData, CommandCenter, FrameData, GameData, Key, RoundResult, ScreenData
+from motion_classes.motion_headers import MotionHeadersEnum as headers
+from motion_classes.motion_names import MotionNamesEnum as motion_names
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class KatKickAi(AIInterface):
     def __init__(
         self,
-        motion: pandas.DataFrame,
+        motion: pd.DataFrame,
         use_kick: bool = False,
         interval: float = 1,
         character_name: str | None = None,
@@ -32,7 +32,7 @@ class KatKickAi(AIInterface):
         self.interval_frames_current: float
         self.heartbeat: int = -1
         self.character_name: str = character_name
-        self.motion: pandas.DataFrame = motion
+        self.motion: pd.DataFrame = motion
         self.deterministic: bool = deterministic
 
         self.reset_interval()
@@ -48,14 +48,14 @@ class KatKickAi(AIInterface):
         return (
             self.__class__.__name__
             + (
-                'kicker'  #
+                "kicker"  #
                 if self.use_kick
-                else 'puncher'
+                else "puncher"
             )
             + (
                 self.character_name  #
                 if self.character_name is not None
-                else ''
+                else ""
             )
         )
 
@@ -63,7 +63,7 @@ class KatKickAi(AIInterface):
         return self.blind_flag
 
     def initialize(self, _: GameData, player_number: int) -> None:
-        logger.info('initialize')
+        logger.info("initialize")
         self.cc: CommandCenter = CommandCenter()
         self.key: Key = Key()
         self.player: int = player_number
@@ -144,14 +144,14 @@ class KatKickAi(AIInterface):
                         self.cc.command_call(
                             motion_names.STAND_B  #
                             if self.use_kick
-                            else motion_names.STAND_A
+                            else motion_names.STAND_A,
                         )
 
     def round_end(self, round_result: RoundResult) -> None:
-        logger.info(f'round end: {round_result}')
+        logger.info(f"round end: {round_result}")
 
     def game_end(self) -> None:
-        logger.info('game end')
+        logger.info("game end")
 
     # Will add more stuff when it gets complicated
     def close(self) -> None:

@@ -11,8 +11,8 @@ from distributed import Client, LocalCluster
 
 import constants as c
 import functions as f
-import GeneticAlgorithm.genetic_functions as gf
-from MotionClasses.MotionEditor import DEFAULT_MOTION_LIST
+import genetic_algorithm.genetic_functions as gf
+from motion_classes.motion_editor import DEFAULT_MOTION_LIST
 
 
 class AgentConfigRanges:
@@ -43,21 +43,21 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
     engine_multiplier: int = 1
 
     win_rates: list[np.ndarray] = []
-    experiment_name: str = f'matchup_{iteration_count}_P1'
+    experiment_name: str = f"matchup_{iteration_count}_P1"
     amended_experiment_name: str = f.append_time_uuid_experiment(experiment_name)
 
     environment: str = json.dumps(
         {
-            'maxDepth': configuration[0],
-            'ucbConstant': configuration[1],
-            'rolloutDuration': configuration[2],
-            'childCreationSimulationLimit': configuration[3],
-            'maxTreeDepth': configuration[4],
-            'minVisitCountBeforeRollout': configuration[5],
-            'usedReversedActionList': configuration[6],
-        }
+            "maxDepth": configuration[0],
+            "ucbConstant": configuration[1],
+            "rolloutDuration": configuration[2],
+            "childCreationSimulationLimit": configuration[3],
+            "maxTreeDepth": configuration[4],
+            "minVisitCountBeforeRollout": configuration[5],
+            "usedReversedActionList": configuration[6],
+        },
     )
-    environment_name: str = 'AGENT_CONFIG_P1'
+    environment_name: str = "AGENT_CONFIG_P1"
 
     win_rates.append(
         asyncio.run(
@@ -81,8 +81,8 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
                 environment=environment,
                 environment_name=environment_name,
                 force_frame_data_unlink=True,
-            )
-        )
+            ),
+        ),
     )
 
     f.consolidate_data(
@@ -93,9 +93,9 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
         ],
     )
 
-    experiment_name: str = f'matchup_{iteration_count}_P2'
+    experiment_name: str = f"matchup_{iteration_count}_P2"
     amended_experiment_name: str = f.append_time_uuid_experiment(experiment_name)
-    environment_name: str = 'AGENT_CONFIG_P2'
+    environment_name: str = "AGENT_CONFIG_P2"
 
     win_rates.append(
         asyncio.run(
@@ -119,8 +119,8 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
                 environment=environment,
                 environment_name=environment_name,
                 force_frame_data_unlink=True,
-            )
-        )
+            ),
+        ),
     )
 
     f.consolidate_data(
@@ -134,7 +134,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
     return tuple(win_rates)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     f.set_random_seeds(c.GLOBAL_SEED)
     f.arg_parser()
 
@@ -142,27 +142,27 @@ if __name__ == '__main__':
 
     if c.SCHEDULER_FILE is not None:
         if not pathlib.Path(c.SCHEDULER_FILE).exists():
-            raise FileNotFoundError(f'Missing file: {c.SCHEDULER_FILE}.\nCannot start job at all')
+            raise FileNotFoundError(f"Missing file: {c.SCHEDULER_FILE}.\nCannot start job at all")
 
-        print('--- Running with Scheduler File ---')
+        print("--- Running with Scheduler File ---")
         client = Client(scheduler_file=c.SCHEDULER_FILE)
 
-        print('Waiting for workers to report for duty...')
+        print("Waiting for workers to report for duty...")
         client.wait_for_workers(n_workers=c.NODES, timeout=30)
-        print('Cluster is fully populated. Starting Evolution.')
+        print("Cluster is fully populated. Starting Evolution.")
     else:
-        print('--- Running with LocalCluster ---')
+        print("--- Running with LocalCluster ---")
 
         core_count: int = c.CORES // c.NODES
         cluster = LocalCluster(
             n_workers=c.NODES,
             threads_per_worker=core_count,
-            resources={'cores': core_count},
+            resources={"cores": core_count},
         )
 
         client = Client(cluster)
 
-    print(f'Dask Dashboard available at: {client.dashboard_link}')
+    print(f"Dask Dashboard available at: {client.dashboard_link}")
     start_time = time.perf_counter()
 
     configurations: list[int, float, int, int, int, int, bool] = list(
@@ -175,8 +175,8 @@ if __name__ == '__main__':
                 AgentConfigRanges.maxTreeDepth,
                 AgentConfigRanges.minVisitCountBeforeRollout,
                 AgentConfigRanges.usedReversedActionList,
-            ]
-        )
+            ],
+        ),
     )
 
     # NOTE: To make this work, I edited the orchestrate matches function. It will not pass through the win_rates as is
@@ -185,22 +185,22 @@ if __name__ == '__main__':
         client.map(
             run_matchup,
             configurations,
-            resources={'cores': 3},
-        )
+            resources={"cores": 3},
+        ),
     )
 
     end_time = time.perf_counter()
-    print(f'time: {end_time - start_time}')
+    print(f"time: {end_time - start_time}")
 
     with open(
         os.path.join(
             c.LOGS.EXPERIMENTS_FOLDER,
             c.LOGS.ROUND_ROBIN,
-            f'{(f.append_time_uuid_experiment("round_robin_results"))}.txt',
+            f"{(f.append_time_uuid_experiment('round_robin_results'))}.txt",
         ),
-        'a',
+        "a",
     ) as f:
-        f.write('Win rates:\n')
-        f.write(f'{win_rates}\n\n')
+        f.write("Win rates:\n")
+        f.write(f"{win_rates}\n\n")
 
     # TODO: Maybe look into consolidating the other entries.

@@ -1,19 +1,9 @@
 import asyncio
-import numpy as np
-import os
-
-from pyftg.socket.aio.gateway import Gateway
-import MotionClasses.MotionEditor as me
-from MotionClasses.MotionNames import MotionNames as motion_names
-from MotionClasses.MotionHeaders import MotionHeaders as headers
-import MotionClasses.MotionEditor as me
-import GeneticAlgorithm.genetic_functions as gf
-import pathlib
-import pandas
 
 import constants as c
 import functions as f
-from itertools import combinations
+import genetic_algorithm.genetic_functions as gf
+import motion_classes.motion_editor as me
 
 """
 	Objective of this file
@@ -28,7 +18,7 @@ from itertools import combinations
         * create script / python to kill all active instances?????
 			* Don't remember what this is
 """
-experiment_name: str = f.append_time_uuid_experiment('delete')
+experiment_name: str = f.append_time_uuid_experiment("delete")
 asyncio.run(
     gf.orchestrate_matches(
         me.DEFAULT_MOTION_LIST,
@@ -37,7 +27,7 @@ asyncio.run(
         1,
         60,
         False,
-    )
+    ),
 )
 
 f.consolidate_data(

@@ -1,8 +1,8 @@
 import itertools
 from enum import StrEnum
 
-from MotionClasses.MotionHeaders import MotionHeadersEnum
-from MotionClasses.MotionNames import MotionNamesEnum
+from motion_classes.motion_headers import MotionHeadersEnum
+from motion_classes.motion_names import MotionNamesEnum
 
 """
     This will hold indices for the meta space subset any experiment uses.
@@ -12,8 +12,8 @@ from MotionClasses.MotionNames import MotionNamesEnum
 
 
 class MapperType(StrEnum):
-    ATTACK_HIT_BOX_WIDTH: str = 'ATTACK_HIT_BOX_WIDTH'
-    ATTACK_HIT_BOX_HEIGHT: str = 'ATTACK_HIT_BOX_HEIGHT'
+    ATTACK_HIT_BOX_WIDTH: str = "ATTACK_HIT_BOX_WIDTH"
+    ATTACK_HIT_BOX_HEIGHT: str = "ATTACK_HIT_BOX_HEIGHT"
 
 
 MAPPER_TYPE_TO_HEADER: dict[str, MotionHeadersEnum] = {
@@ -57,21 +57,21 @@ def to_meta_subspace(meta_subspace: list[tuple[MotionNamesEnum, MotionHeadersEnu
         adjustment_motion: MotionNamesEnum = adjustment[0]
         adjustment_header: MotionNamesEnum = adjustment[1]
 
-        if adjustment_header.value in known_mapper_types:
+        if adjustment_header in known_mapper_types:
             new_meta_subspace.extend(
                 [
                     (adjustment_motion, translated_header)  #
-                    for translated_header in MAPPER_TYPE_TRANSLATIONS[adjustment_header.value]
-                ]
+                    for translated_header in MAPPER_TYPE_TRANSLATIONS[adjustment_header]
+                ],
             )
         else:
             new_meta_subspace.append(adjustment)
 
     # Validate solution
-    unmapped_headers = set({mapper_type.value for mapper_type in MapperType})
+    unmapped_headers = set({mapper_type for mapper_type in MapperType})
     for adjustment in new_meta_subspace:
         if adjustment[1] in unmapped_headers:
-            raise RuntimeError(f'Incomplete Code.\nMapper did not fully map all: {adjustment[1].value} should be mapped!')
+            raise RuntimeError(f"Incomplete Code.\nMapper did not fully map all: {adjustment[1]} should be mapped!")
 
     return new_meta_subspace
 
@@ -86,7 +86,6 @@ def from_meta_space(
         otherwise we throw an error
     Then, we are going to replace those pairs with the
     """
-
     meta_subspace: list[tuple[MotionNamesEnum, MotionHeadersEnum]] = []
     seen_indices: list[int] = []
     for index, adjustment in enumerate(new_meta_subspace):
@@ -110,6 +109,6 @@ def from_meta_space(
                 try:
                     seen_indices.append(new_meta_subspace.index(correlated_adjustment))
                 except ValueError as error:
-                    raise RuntimeError(f'correlated adjustment: {correlated_adjustment} is not in meta space: {new_meta_subspace}') from error
+                    raise RuntimeError(f"correlated adjustment: {correlated_adjustment} is not in meta space: {new_meta_subspace}") from error
 
     return meta_subspace

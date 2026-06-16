@@ -10,15 +10,15 @@ import shutil
 import subprocess
 import time
 import uuid
+import zipfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from itertools import islice
-import zipfile
 
 import aiofiles
 import dill
 import numpy as np
-import pandas
+import pandas as pd
 from pyftg.socket.aio.gateway import Gateway
 from pymoo.core.algorithm import Algorithm
 from pymoo.core.result import Result
@@ -26,15 +26,15 @@ from pymoo.core.result import Result
 import constants as c
 import functions as f
 from agents.KatKickAi import KatKickAi
-from MotionClasses.MotionEditor import MotionEditor
+from motion_classes.motion_editor import MotionEditor
 
 
-def parse_argument_str(shorthand: str, full_name: str, default: str | None = None, help: str = '') -> str:
-    parser: argparse.ArgumentParser = argparse.ArgumentParser(description='FightingICE Research Runner', add_help=False)
+def parse_argument_str(shorthand: str, full_name: str, default: str | None = None, help: str = "") -> str:
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(description="FightingICE Research Runner", add_help=False)
 
     parser.add_argument(
-        f'-{shorthand}',
-        f'--{full_name}',
+        f"-{shorthand}",
+        f"--{full_name}",
         type=str,
         default=default,
         help=help,
@@ -45,91 +45,91 @@ def parse_argument_str(shorthand: str, full_name: str, default: str | None = Non
 
 
 def arg_parser() -> str:
-    parser: argparse.ArgumentParser = argparse.ArgumentParser(description='FightingICE Research Runner')
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(description="FightingICE Research Runner")
 
     parser.add_argument(
-        '-hp',
-        '--player_hit_points',
+        "-hp",
+        "--player_hit_points",
         type=int,
         default=-1,
-        help='Hit-points for both agents',
+        help="Hit-points for both agents",
     )
     parser.add_argument(
-        '-i',
-        '--poll_interval_sec',
+        "-i",
+        "--poll_interval_sec",
         type=int,
         default=-1,
-        help='Time lag for updating console log',
+        help="Time lag for updating console log",
     )
     parser.add_argument(
-        '-e',
-        '--engine_count',
+        "-e",
+        "--engine_count",
         type=int,
         default=-1,
-        help='Number of engines that will run at once',
+        help="Number of engines that will run at once",
     )
     parser.add_argument(
-        '-g',
-        '--no_games',
+        "-g",
+        "--no_games",
         type=int,
         default=-1,
-        help='Number of games each engine will simulate',
+        help="Number of games each engine will simulate",
     )
     parser.add_argument(
-        '-d',
-        '--game_duration',
+        "-d",
+        "--game_duration",
         type=int,
         default=-1,
-        help='Max drain of each match between agents',
+        help="Max drain of each match between agents",
     )
     parser.add_argument(
-        '-exp',
-        '--game_name',
+        "-exp",
+        "--game_name",
         type=str,
-        default='adhoc',
-        help='Name of the experiment',
+        default="adhoc",
+        help="Name of the experiment",
     )
     parser.add_argument(
-        '-zip',
-        '--zip_files',
+        "-zip",
+        "--zip_files",
         type=str,
-        default='True',
-        help='Flag to ascertain if log files should be zipped or not',
+        default="True",
+        help="Flag to ascertain if log files should be zipped or not",
     )
     parser.add_argument(
-        '-c',
-        '--cores',
+        "-c",
+        "--cores",
         type=int,
         default=-1,
-        help='Multiprocessing: Flag for core count per node',
+        help="Multiprocessing: Flag for core count per node",
     )
     parser.add_argument(
-        '-n',
-        '--nodes',
+        "-n",
+        "--nodes",
         type=int,
         default=-1,
-        help='Multiprocessing: Flag for node count',
+        help="Multiprocessing: Flag for node count",
     )
     parser.add_argument(
-        '-p',
-        '--partition',
+        "-p",
+        "--partition",
         type=str,
-        default='regular',
-        help='Multiprocessing: Name of partition',
+        default="regular",
+        help="Multiprocessing: Name of partition",
     )
     parser.add_argument(
-        '-sf',
-        '--scheduler_file',
-        type=str,
-        default=None,
-        help='Multiprocessing: Config file for scheduler',
-    )
-    parser.add_argument(
-        '-bp',
-        '--base_path',
+        "-sf",
+        "--scheduler_file",
         type=str,
         default=None,
-        help='Multiprocessing: Base path for absolute routing',
+        help="Multiprocessing: Config file for scheduler",
+    )
+    parser.add_argument(
+        "-bp",
+        "--base_path",
+        type=str,
+        default=None,
+        help="Multiprocessing: Base path for absolute routing",
     )
 
     # Booleans (Flags)
@@ -165,12 +165,12 @@ def arg_parser() -> str:
     )
     c.EXPERIMENT_NAME = (
         c.EXPERIMENT_NAME  #
-        if args.game_name == 'adhoc'
+        if args.game_name == "adhoc"
         else args.game_name
     )
     c.ZIP_FILES = (
         c.ZIP_FILES  #
-        if args.zip_files == 'True'
+        if args.zip_files == "True"
         else False
     )
     c.NODES = (
@@ -185,17 +185,17 @@ def arg_parser() -> str:
     )
     c.PARTITION = (
         c.PARTITION  #
-        if args.partition == 'regular'
+        if args.partition == "regular"
         else args.partition
     )
     c.SCHEDULER_FILE = (
         c.SCHEDULER_FILE  #
-        if args.scheduler_file == 'None' or args.scheduler_file is None
+        if args.scheduler_file == "None" or args.scheduler_file is None
         else args.scheduler_file
     )
     c.BASE_PATH = (
         c.BASE_PATH  #
-        if args.base_path == 'None' or args.base_path is None
+        if args.base_path == "None" or args.base_path is None
         else args.base_path
     )
 
@@ -209,7 +209,7 @@ def arg_parser() -> str:
 
 
 def get_number_from_file_name(file_name: str, string_to_find: str) -> int:
-    match = re.search(rf'{string_to_find}-(\d+)', file_name)
+    match = re.search(rf"{string_to_find}-(\d+)", file_name)
 
     if match:
         return int(match.group(1))
@@ -226,7 +226,11 @@ def consolidate_data(
         exclude_list = []
 
     # We will first throw an error if you add a folder to the logs that we are not aware of
-    directory: pathlib.Path = pathlib.Path('log')
+    directory: pathlib.Path = pathlib.Path("log")
+    directory.mkdir(
+        exist_ok=True,
+        parents=True,
+    )
     unknown_directories: list[str] = []
 
     use_default_log_list: bool = log_list is None
@@ -239,17 +243,17 @@ def consolidate_data(
 
         if len(unknown_directories) != 0:
             raise FileNotFoundError(
-                'Known log directories are:',  #
-                ','.join(log_list),
-                '\nFound these unknown directories:',
-                ','.join(unknown_directories),
+                "Known log directories are:",  #
+                ",".join(log_list),
+                "\nFound these unknown directories:",
+                ",".join(unknown_directories),
             )
 
     # Going to first compress the motions in custom motions
     if c.ZIP_FILES and c.CUSTOM_MOTION_PATH not in exclude_list:
         custom_motion_folder_path = pathlib.Path(os.path.join(c.CUSTOM_MOTION_PATH, experiment_name))
         if custom_motion_folder_path.exists():
-            shutil.make_archive(base_name=str(custom_motion_folder_path), format='zip', root_dir=c.CUSTOM_MOTION_PATH, base_dir=experiment_name)
+            shutil.make_archive(base_name=str(custom_motion_folder_path), format="zip", root_dir=c.CUSTOM_MOTION_PATH, base_dir=experiment_name)
 
             purge_directory(str(custom_motion_folder_path), True)
 
@@ -258,49 +262,53 @@ def consolidate_data(
             continue
 
         log_group: pathlib.Path = directory.joinpath(log_group_name)
+        log_group.mkdir(
+            exist_ok=True,
+            parents=True,
+        )
         # We will first check if it is already in a folder
 
         time_stamps: set = set()
         file_names: list[str] = []
         for file in log_group.iterdir():
-            if file.is_file() and file.suffix != '.zip':
+            if file.is_file() and file.suffix != ".zip":
                 file_names.append(file.name)
-                time_stamps.add(file.name.split('-').pop().rsplit('.', 1)[0])
+                time_stamps.add(file.name.split("-").pop().rsplit(".", 1)[0])
 
         for time_stamp in time_stamps:
-            experiment_regex: re.Pattern = re.compile(rf'{re.escape(experiment_name)}.*?{re.escape(time_stamp)}')
+            experiment_regex: re.Pattern = re.compile(rf"{re.escape(experiment_name)}.*?{re.escape(time_stamp)}")
 
             experiment_files: list[pathlib.Path] = []
             for experiment in file_names:
                 if experiment_regex.match(experiment):
                     experiment_files.append(directory.joinpath(log_group_name, experiment))
 
-            file_extension = file_names[0].split('.')[-1]
-            consolidated_file_name: pathlib.Path = directory.joinpath(log_group_name, f'{experiment_name}-{time_stamp}.{file_extension}')
+            file_extension = file_names[0].split(".")[-1]
+            consolidated_file_name: pathlib.Path = directory.joinpath(log_group_name, f"{experiment_name}-{time_stamp}.{file_extension}")
 
             if len(experiment_files) == 0:
                 continue
 
             if log_group_name == c.LOGS.REPLAY:
-                experiment_folder_name: str = f'{experiment_name}-{c.GAME_TIME}'
-                log_group_path: str = os.path.join('log', log_group_name)
+                experiment_folder_name: str = f"{experiment_name}-{c.GAME_TIME}"
+                log_group_path: str = os.path.join("log", log_group_name)
                 experiment_folder_path: str = os.path.join(log_group_path, experiment_folder_name)
                 os.makedirs(experiment_folder_path, exist_ok=True)
                 for experiment_file in experiment_files:
                     experiment_file.rename(
                         os.path.join(
-                            'log',
+                            "log",
                             log_group_name,
                             experiment_folder_name,
                             experiment_file.name,
-                        )
+                        ),
                     )
 
                 if c.ZIP_FILES:
                     experiment_folder = os.path.join(log_group_path, experiment_folder_name)
                     shutil.make_archive(
                         experiment_folder,
-                        'zip',
+                        "zip",
                         experiment_folder_path,
                     )
 
@@ -309,9 +317,9 @@ def consolidate_data(
                 """
 					we will handle the points and the frame data differently.
 				"""
-                with consolidated_file_name.open(mode='w') as consolidated_file:
+                with consolidated_file_name.open(mode="w") as consolidated_file:
                     if log_group_name == c.LOGS.FRAME_DATA:
-                        consolidated_file.write('[')
+                        consolidated_file.write("[")
 
                     for experiment_file_index, experiment_file in enumerate(experiment_files):
                         if experiment_file.name == consolidated_file_name.name:
@@ -320,38 +328,38 @@ def consolidate_data(
                         if log_group_name == c.LOGS.FRAME_DATA:
                             consolidated_file.write(f'{{"{experiment_file.name}":')
                         elif log_group_name != c.LOGS.POINT:
-                            consolidated_file.write(f'{experiment_file}\n')
+                            consolidated_file.write(f"{experiment_file}\n")
 
-                        with experiment_file.open(mode='r') as src_file:
+                        with experiment_file.open(mode="r") as src_file:
                             if log_group_name == c.LOGS.POINT:
-                                instance_number: int = get_number_from_file_name(experiment_file.name, 'instance')
-                                round_number: int = get_number_from_file_name(experiment_file.name, 'round')
-                                match_result: list[str] = src_file.readline().split(',')
+                                instance_number: int = get_number_from_file_name(experiment_file.name, "instance")
+                                round_number: int = get_number_from_file_name(experiment_file.name, "round")
+                                match_result: list[str] = src_file.readline().split(",")
                                 # Remove the round count from the engine
                                 match_result.pop(0)
-                                match_result[-1] = match_result[-1].replace('\n', '')
+                                match_result[-1] = match_result[-1].replace("\n", "")
                                 winner: int = (match_result[0] > match_result[1]) - (match_result[1] > match_result[0])
-                                consolidated_file.write(f'{instance_number},{round_number},{",".join(match_result)},{winner}')
+                                consolidated_file.write(f"{instance_number},{round_number},{','.join(match_result)},{winner}")
                             else:
                                 shutil.copyfileobj(src_file, consolidated_file)
 
                         if log_group_name == c.LOGS.FRAME_DATA:
                             if experiment_file_index == len(experiment_files) - 1:
-                                consolidated_file.write('}\n')
+                                consolidated_file.write("}\n")
                             else:
-                                consolidated_file.write('},\n')
+                                consolidated_file.write("},\n")
                         else:
-                            consolidated_file.write('\n')
+                            consolidated_file.write("\n")
 
                         experiment_file.unlink(missing_ok=True)
 
                     if log_group_name == c.LOGS.FRAME_DATA:
-                        consolidated_file.write(']')
+                        consolidated_file.write("]")
 
                 # errthang gets a ZIP
                 if c.ZIP_FILES and log_group_name != c.LOGS.POINT:
-                    zip_path: str = str(consolidated_file_name.with_suffix('.zip'))
-                    with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED) as zip_file:
+                    zip_path: str = str(consolidated_file_name.with_suffix(".zip"))
+                    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zip_file:
                         zip_file.write(
                             consolidated_file_name,
                             arcname=consolidated_file_name.name,
@@ -364,12 +372,12 @@ def consolidate_data(
 
 def kill_process(process: asyncio.subprocess.Process) -> None:
     if process.returncode is None:
-        print(f'Forcefully killing process tree for PID {process.pid}...')
+        print(f"Forcefully killing process tree for PID {process.pid}...")
 
         # Windows
-        if os.name == 'nt':
+        if os.name == "nt":
             subprocess.run(
-                ['taskkill', '/F', '/T', '/PID', str(process.pid)],
+                ["taskkill", "/F", "/T", "/PID", str(process.pid)],
                 capture_output=True,
                 # check=True,
                 check=False,
@@ -408,14 +416,14 @@ async def process_simulator_logs(
             break
 
         line: str = line_bytes.decode().strip()
-        await log_file.write(line + '\n')
+        await log_file.write(line + "\n")
 
-        if 'Waiting to launch a game' in line:
+        if "Waiting to launch a game" in line:
             await log_file.flush()
             ready_event.set()
 
-        if any(err in line for err in ['Exception', 'Error', 'SEVERE']):
-            print(f'!!! CRITICAL ERROR ON PROCESS {process_id} !!!\n{line}')
+        if any(err in line for err in ["Exception", "Error", "SEVERE"]):
+            print(f"!!! CRITICAL ERROR ON PROCESS {process_id} !!!\n{line}")
             await log_file.flush()
             kill_process(subprocess)
             break
@@ -437,18 +445,18 @@ async def monitor_matches(
             active_simulators[index] = simulator.returncode is None and not match.done()
 
         if not np.any(active_simulators):
-            print('Simulation Completed Successfully (Maybe)')
+            print("Simulation Completed Successfully (Maybe)")
             break
 
         if c.POLL_INTERVAL_SEC != 0 and time.time() - last_heartbeat >= c.POLL_INTERVAL_SEC:
             last_heartbeat: float = time.time()
-            print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            line: str = ''
+            print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            line: str = ""
             for index, is_active in enumerate(active_simulators):
-                line += f'PID: {simulators[index].pid} - {"ACTIVE" if is_active else "DEAD  "}'
+                line += f"PID: {simulators[index].pid} - {'ACTIVE' if is_active else 'DEAD  '}"
             print(line)
             for match in matches:
-                print(f'Match {"playing" if not match.done() else "finished"}')
+                print(f"Match {'playing' if not match.done() else 'finished'}")
                 print(match._state)
             # print(f"\033[{len(active_simulators) + 2}F", end="", flush=True)
             # print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "\n")
@@ -460,9 +468,9 @@ async def monitor_matches(
 
         await asyncio.sleep(c.POLL_INTERVAL_SEC)
 
-    print('All executions are closed')
+    print("All executions are closed")
     for simulator in simulators:
-        print(f'PID: {simulator.pid} - {simulator.returncode}')
+        print(f"PID: {simulator.pid} - {simulator.returncode}")
 
 
 async def stop_orchestration(
@@ -492,14 +500,14 @@ async def orchestrate_matches(
     matches: list[asyncio.Task] = []
 
     try:
-        print('Waiting for all engines to be ready')
+        print("Waiting for all engines to be ready")
         await asyncio.wait_for(
             asyncio.gather(*(event.wait() for event in simulator_ready_events)),
             timeout=30.0,
         )
-        print('All engines are ready')
+        print("All engines are ready")
     except asyncio.TimeoutError:
-        print('One or more engines failed to start in time!')
+        print("One or more engines failed to start in time!")
         await stop_orchestration(
             simulators,
             experiment_name,
@@ -509,10 +517,10 @@ async def orchestrate_matches(
 
     for index in range(no_engines):
         port: int | None = f.get_port_number_from_engine_logs(experiment_name, simulators[index].pid)
-        print(f'PID: {simulators[index].pid}, PORT: {port}')
+        print(f"PID: {simulators[index].pid}, PORT: {port}")
 
         if port is None:
-            raise RuntimeError('FAILED TO GET PORT NUMBER FROM FILE, ABORT ALL')
+            raise RuntimeError("FAILED TO GET PORT NUMBER FROM FILE, ABORT ALL")
 
         gateway = Gateway(port=port)
 
@@ -552,16 +560,16 @@ async def orchestrate_matches(
                 gateway.register_ai(agent2.name(), agent2)
                 agent_2_name = agent2.name()
 
-        game_name = f'{experiment_name}-instance-{index}-{agent_1_name}-vs-{agent_2_name}'
+        game_name = f"{experiment_name}-instance-{index}-{agent_1_name}-vs-{agent_2_name}"
 
         matches.append(
             asyncio.create_task(
                 gateway.run_game(
-                    [f'{game_name}<name>{character_duo[0]}', character_duo[1]],
+                    [f"{game_name}<name>{character_duo[0]}", character_duo[1]],
                     [agent_1_name, agent_2_name],
                     c.NO_GAMES,
-                )
-            )
+                ),
+            ),
         )
 
     # Kill matches if games take too long to finish
@@ -573,7 +581,7 @@ async def orchestrate_matches(
             timeout=duration,
         )
     except asyncio.TimeoutError:
-        print(f'[CRITICAL] Experiment exceeded time limit: {duration} sec. Shutting down.')
+        print(f"[CRITICAL] Experiment exceeded time limit: {duration} sec. Shutting down.")
         await stop_orchestration(
             simulators,
             experiment_name,
@@ -603,8 +611,8 @@ async def start_simulators(
     environment: str | None = None,
     environment_name: str | None = None,
 ) -> None:
-    if '-' in experiment_name:
-        raise ValueError('Please avoid using experiment names with -, it will mess up the data consolidator')
+    if "-" in experiment_name:
+        raise ValueError("Please avoid using experiment names with -, it will mess up the data consolidator")
 
     is_extra_commands_empty = False
     if extra_commands is None:
@@ -638,9 +646,9 @@ async def start_simulators(
         log_files.append(
             await aiofiles.open(
                 # f'log/engines/{experiment_name}-instance-{gateway.port}-{c.GAME_TIME}.log',
-                f'log/engines/{experiment_name}-pid-{proc.pid}-{c.GAME_TIME}.log',
-                'w',
-            )
+                f"log/engines/{experiment_name}-pid-{proc.pid}-{c.GAME_TIME}.log",
+                "w",
+            ),
         )
 
         task_containers.append(
@@ -650,11 +658,11 @@ async def start_simulators(
                     log_files[index],
                     proc.pid,
                     simulator_ready_events[index],
-                )
-            )
+                ),
+            ),
         )
 
-        print(f'Engine started (PID: {simulators[index].pid}.')
+        print(f"Engine started (PID: {simulators[index].pid}.")
 
     await orchestrate_matches(
         no_engines,
@@ -675,14 +683,14 @@ def purge_directory(target_dir: str | pathlib.Path, remove_root: bool = False) -
     root = pathlib.Path(target_dir)
 
     if not root.exists():
-        print(f'Path {root} does not exist.')
+        print(f"Path {root} does not exist.")
         print(os.getcwd())
         return
 
     # rglob("*") finds everything recursively
     # We sort them by length descending to ensure we process
     # the deepest files/folders first (children before parents)
-    for path in sorted(root.rglob('*'), key=lambda p: len(p.parts), reverse=True):
+    for path in sorted(root.rglob("*"), key=lambda p: len(p.parts), reverse=True):
         if path.is_file() or path.is_symlink():
             path.unlink()
         elif path.is_dir():
@@ -710,17 +718,17 @@ def motion_indices_to_cords(motion_indices: np.ndarray) -> np.ndarray:
 
 @contextmanager
 def full_view() -> Iterator[None]:
-    with pandas.option_context(
-        'display.max_rows',
+    with pd.option_context(
+        "display.max_rows",
         None,
-        'display.max_columns',
+        "display.max_columns",
         None,
     ):
         yield
 
 
-def read_match_results(file_name: str) -> pandas.DataFrame:
-    return pandas.read_csv(
+def read_match_results(file_name: str) -> pd.DataFrame:
+    return pd.read_csv(
         file_name,
         names=[
             c.PointHeaderNames.INSTANCE,
@@ -752,19 +760,19 @@ def transform_win_rate(win_rate: float, sigma: float = 0.20) -> np.ndarray:
 
 def get_port_number_from_engine_logs(experiment_name: str, pid: int) -> int | None:
     try:
-        engine_logs_path = pathlib.Path(os.path.join('log', 'engines', f'{experiment_name}-pid-{pid}-{c.GAME_TIME}.log'))
+        engine_logs_path = pathlib.Path(os.path.join("log", "engines", f"{experiment_name}-pid-{pid}-{c.GAME_TIME}.log"))
         with open(engine_logs_path) as file:
-            content: str = ''.join(list(islice(file, 10)))
-            pattern: re.Pattern = re.compile(r'<PORT>:(\d+)')
+            content: str = "".join(list(islice(file, 10)))
+            pattern: re.Pattern = re.compile(r"<PORT>:(\d+)")
 
             match = pattern.search(content)
 
             if match:
                 return int(match.group(1))
     except FileNotFoundError:
-        print(f'FILE NOT FOUND: {engine_logs_path}')
+        print(f"FILE NOT FOUND: {engine_logs_path}")
     except Exception as e:
-        print(f'An error occured when trying to get port from {engine_logs_path}\n{e}')
+        print(f"An error occured when trying to get port from {engine_logs_path}\n{e}")
 
     return None
 
@@ -773,58 +781,58 @@ def numpy_2d_to_tuple(numpy_array: np.ndarray) -> tuple:
     return tuple(map(tuple, numpy_array))
 
 
-def get_current_time_str(delimiter: str = ':') -> str:
-    return datetime.datetime.now().strftime(f'%H{delimiter}%M{delimiter}%S')
+def get_current_time_str(delimiter: str = ":") -> str:
+    return datetime.datetime.now().strftime(f"%H{delimiter}%M{delimiter}%S")
 
 
 def read_results(res_name: str) -> None:
-    with open(res_name, 'rb') as f:
+    with open(res_name, "rb") as f:
         res: Result = dill.load(f)
 
-    print(f'{"gen":>5} | {"n_eval":>7} | {"n_nds":>5} | {"eps":>12}')
-    print('-' * 45)
+    print(f"{'gen':>5} | {'n_eval':>7} | {'n_nds':>5} | {'eps':>12}")
+    print("-" * 45)
     # Taken from output file
-    print('time sec: 1366')
+    print("time sec: 1366")
 
     for i, generation in enumerate(res.history):
         n_gen = i + 1
         n_eval = generation.evaluator.n_eval
         n_nds = len(generation.opt)
-        print(f'{n_gen:>5} | {n_eval:>7} | {n_nds:>5} | {generation.opt.get("F").min():>12.6f}')
+        print(f"{n_gen:>5} | {n_eval:>7} | {n_nds:>5} | {generation.opt.get('F').min():>12.6f}")
 
-    print('non dominated solutions')
+    print("non dominated solutions")
     population = res.opt
 
-    genes: np.ndarray = population.get('X')
-    fitnesses: np.ndarray = population.get('F')
+    genes: np.ndarray = population.get("X")
+    fitnesses: np.ndarray = population.get("F")
 
     for gene, fitness in zip(genes, fitnesses, strict=True):
-        print(f'Gene: [{", ".join(np.round(gene, 4).astype(str))}]')
-        print(f'Fitness: {fitness}\n')
+        print(f"Gene: [{', '.join(np.round(gene, 4).astype(str))}]")
+        print(f"Fitness: {fitness}\n")
 
     print()
 
     for index, generation in enumerate(res.history):
         generation: Algorithm
 
-        print(f'Generation: {index}\n')
+        print(f"Generation: {index}\n")
         population = generation.pop
 
-        genes: np.ndarray = population.get('X')
-        fitnesses: np.ndarray = population.get('F')
+        genes: np.ndarray = population.get("X")
+        fitnesses: np.ndarray = population.get("F")
 
         for gene, fitness in zip(genes, fitnesses, strict=True):
-            print(f'Gene: [{", ".join(np.round(gene, 4).astype(str))}]')
-            print(f'Fitness: {fitness}\n')
+            print(f"Gene: [{', '.join(np.round(gene, 4).astype(str))}]")
+            print(f"Fitness: {fitness}\n")
 
         print()
 
 
 def append_time_uuid_experiment(experiment_name: str) -> str:
     experiment_suffix_uuid: str = uuid.uuid4().hex[:6]
-    experiment_suffix_time: str = datetime.datetime.now().strftime('%H%M%S')
+    experiment_suffix_time: str = datetime.datetime.now().strftime("%H%M%S")
 
-    return f'{experiment_name}_iter_{experiment_suffix_time}_{experiment_suffix_uuid}'
+    return f"{experiment_name}_iter_{experiment_suffix_time}_{experiment_suffix_uuid}"
 
 
 def resume_algorithm(plk_name: str | None, throw_error: bool = False) -> Result | None:
@@ -835,10 +843,10 @@ def resume_algorithm(plk_name: str | None, throw_error: bool = False) -> Result 
 
     if not plk_path.exists():
         if throw_error:
-            raise FileNotFoundError(f'Failed to find file: {plk_path}')
+            raise FileNotFoundError(f"Failed to find file: {plk_path}")
         return None
 
-    with open(plk_path, 'rb') as res_file:
+    with open(plk_path, "rb") as res_file:
         return dill.load(res_file)
 
 

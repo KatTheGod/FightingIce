@@ -6,20 +6,26 @@
 
 import asyncio
 import os
-import uuid
 import pathlib
-from datetime import datetime
 import time
+import uuid
+from datetime import datetime
 
 import numpy as np
 from sympy import divisors
 
 import constants as c
 import functions as f
-from GeneticAlgorithm.genetic_functions import constraint_novelty_search, gene_to_motions, generate_random_gene, orchestrate_matches, get_motion_coordinates
-from GeneticAlgorithm.genetic_functions import map_numerical_motion_coordinates
-from MotionClasses.MotionHeaders import MotionHeaders as headers
-from MotionClasses.MotionNames import MotionNames as motion_names
+from genetic_algorithm.genetic_functions import (
+    constraint_novelty_search,
+    gene_to_motions,
+    generate_random_gene,
+    get_motion_coordinates,
+    map_numerical_motion_coordinates,
+    orchestrate_matches,
+)
+from motion_classes.motion_headers import MotionHeadersEnum as headers
+from motion_classes.motion_names import MotionNamesEnum as motion_names
 
 
 def replay_single_mutation(gene: np.ndarray, match_per_agent: int, motion_adjustments: list[tuple[str, str]]) -> tuple[float, float]:
@@ -38,22 +44,22 @@ def replay_single_mutation(gene: np.ndarray, match_per_agent: int, motion_adjust
         engine_multiplier = match_per_agent
     else:
         factors = divisors(match_per_agent)
-        engine_multiplier = factors[np.searchsorted(factors, max_capacity, side='left') - 1]
+        engine_multiplier = factors[np.searchsorted(factors, max_capacity, side="left") - 1]
 
-    time_for_match: str = datetime.now().strftime('%H.%M.%S')
+    time_for_match: str = datetime.now().strftime("%H.%M.%S")
     average_win_rate = asyncio.run(
         orchestrate_matches(
             mutated_motions=mutated_motions,
             no_matches=match_per_agent // engine_multiplier,
-            experiment_name='visual',
+            experiment_name="visual",
             experiment_suffix=time_for_match,
             engine_multiplier=engine_multiplier,
             game_duration_sec=60,
             visual=False,
-        )
+        ),
     )
 
-    numerical_differences = np.stack([motion.select_dtypes('number') for motion in mutated_motions])
+    numerical_differences = np.stack([motion.select_dtypes("number") for motion in mutated_motions])
     uniqueness_reward: float = constraint_novelty_search(
         numerical_differences,
         get_motion_coordinates(motion_adjustments),
@@ -75,8 +81,8 @@ def generate_data(match_counts: np.ndarray, repeat_count: int = 10) -> None:
         (motion_names.STAND_B, headers.ATTACK_HIT_ADD_ENERGY),
     ]
     job_id: str = f.parse_argument_str(
-        shorthand='jid',
-        full_name='jon_id',
+        shorthand="jid",
+        full_name="jon_id",
     )
 
     # Could parse nodes and cores as well
@@ -84,15 +90,15 @@ def generate_data(match_counts: np.ndarray, repeat_count: int = 10) -> None:
     if job_id is None:
         job_id = uuid.uuid4().hex
 
-    pathlib.Path(os.path.join(c.LOGS.SOLUTION_EXPLORER, 'logs', job_id)).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(os.path.join(c.LOGS.SOLUTION_EXPLORER, "logs", job_id)).mkdir(parents=True, exist_ok=True)
 
-    print(f'generating data for job {job_id}')
+    print(f"generating data for job {job_id}")
     for match_count in match_counts:
-        print(f'About to start simulations for match count: {match_count}')
+        print(f"About to start simulations for match count: {match_count}")
         results = np.zeros(shape=repeat_count, dtype=np.float64)
         times = np.zeros(shape=repeat_count, dtype=np.float64)
         for repeat in range(repeat_count):
-            print(f'repeat: {repeat}')
+            print(f"repeat: {repeat}")
             start_time = time.perf_counter()
             results[repeat] = replay_single_mutation(
                 gene=generate_random_gene(motion_adjustments),
@@ -103,28 +109,28 @@ def generate_data(match_counts: np.ndarray, repeat_count: int = 10) -> None:
         np.savetxt(
             fname=os.path.join(
                 c.LOGS.SOLUTION_EXPLORER,
-                'logs',
+                "logs",
                 job_id,
-                f'match_count_{match_count}.csv',
+                f"match_count_{match_count}.csv",
             ),
             X=results,
-            delimiter=',',
-            fmt='%.10f',
+            delimiter=",",
+            fmt="%.10f",
         )
 
         np.savetxt(
             fname=os.path.join(
                 c.LOGS.SOLUTION_EXPLORER,
-                'logs',
+                "logs",
                 job_id,
-                f'match_time_{match_count}.csv',
+                f"match_time_{match_count}.csv",
             ),
             X=times,
-            delimiter=',',
-            fmt='%.10f',
+            delimiter=",",
+            fmt="%.10f",
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     generate_data(match_counts=np.array([1, 2, 3, 5, 7, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100]), repeat_count=10)
     # print(replay_single_mutation(gene=np.array([140, 107, 144, 224, 174, 14]), match_per_agent=8))
