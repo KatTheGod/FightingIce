@@ -137,7 +137,8 @@ class FightingIceProblem(Problem):
             if match:
                 experiment_name_number = max(-1, int(match.group(1)))
 
-        self.experiment_name = f"{meta_subspace.index}_{experiment_name}_{experiment_name_number + 1}"
+        objectives_str = "-".join(c.OBJECTIVE_SET)
+        self.experiment_name = f"{meta_subspace.index}_{objectives_str}_{experiment_name}_{experiment_name_number + 1}"
         print(f"Derived experiment name: {self.experiment_name}")
 
         self.motion_adjustments: list[tuple[str, str]] = meta_mapper.to_meta_subspace(self.meta_space_subset.meta_subspace)

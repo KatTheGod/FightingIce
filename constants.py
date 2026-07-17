@@ -152,8 +152,8 @@ start_time = 0
 end_time = 0
 
 class Objectives(StrEnum):
-    excitement: str = "excitement"
-    competitive_balance: str = "competitive_balance"
-    uniqueness: str = "uniqueness"
+    excitement: str = "ex"
+    competitive_balance: str = "cb"
+    uniqueness: str = "uq"
 
 OBJECTIVE_SET: list[Objectives] = list(Objectives)
