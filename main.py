@@ -67,8 +67,8 @@ if __name__ == "__main__":
             problem = FightingIceProblem(
                 experiment_name=experiment_name,
                 dask_client=client,
-                engine_multiplier=5,
-                no_matches=2,
+                engine_multiplier=4,
+                no_matches=3,
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
