@@ -21,7 +21,7 @@ CORES=14
 BASE_PATH="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 DASK_FILE="${BASE_PATH}/dask_schedulers/dask_${SLURM_JOB_ID}.json"
 
-conda run -n fightingIceEnv_stable dask scheduler \
+conda run -n FI_3_12_13 dask scheduler \
         --scheduler-file $DASK_FILE \
         --port 0 \
         > dask_logs/scheduler_$SLURM_JOB_ID 2>&1 &
@@ -36,9 +36,9 @@ srun --quiet \
     --unbuffered \
     --output=dask_logs/worker_logs_$SLURM_JOB_ID/worker_%j_%t.out \
     --error=dask_logs/worker_logs_$SLURM_JOB_ID/worker_%j_%t.err \
-    conda run --no-capture-output -n fightingIceEnv_stable dask worker \
+    conda run --no-capture-output -n FI_3_12_13 dask worker \
     --scheduler-file $DASK_FILE \
     --nthreads $CORES \
     --resources "cores=$CORES" &
 
-conda run -n fightingIceEnv_stable python experiments/main.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH
+conda run -n FI_3_12_13 python main.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH
