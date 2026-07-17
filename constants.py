@@ -150,3 +150,10 @@ class pymoo:
 # Delete these, lazy way to track time
 start_time = 0
 end_time = 0
+
+class Objectives(StrEnum):
+    excitement: str = "excitement"
+    competitive_balance: str = "competitive_balance"
+    uniqueness: str = "uniqueness"
+
+OBJECTIVE_SET: list[Objectives] = list(Objectives)

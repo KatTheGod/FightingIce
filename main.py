@@ -45,8 +45,11 @@ if __name__ == "__main__":
         client = Client(cluster)
 
     print(f"Dask Dashboard available at: {client.dashboard_link}")
-    experiment_name: str = "new_meta_space_no_excitement"
-    objective_count: int = 2
+    experiment_name: str = "meta_space_testers_"
+    c.OBJECTIVE_SET = [
+        c.Objectives.competitive_balance,
+        c.Objectives.uniqueness,
+    ]
 
     try:
         previous_result = f.resume_algorithm(None)
@@ -56,7 +59,6 @@ if __name__ == "__main__":
             print("New experiment")
             current_gen_count: int = 0
             problem = FightingIceProblem(
-                objective_count=objective_count,
                 experiment_name=experiment_name,
                 dask_client=client,
                 engine_multiplier=1,
@@ -76,7 +78,7 @@ if __name__ == "__main__":
                         c.pymoo.MOEAD.SpreadType.DAS_DENNIS,
                         # n_dim=3,
                         # n_partitions=10,
-                        n_dim=objective_count,
+                        n_dim=len(c.OBJECTIVE_SET),
                         n_partitions=5,
                     ),
                     # Magic number is 20

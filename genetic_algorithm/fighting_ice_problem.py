@@ -39,7 +39,6 @@ from genetic_algorithm.meta_space import (
 
 @dataclass
 class IndividualSettings:
-    objective_count: int
     meta_subspace: MetaStateSubset
     motion_coordinates: np.ndarray
     mapped_numerical_motion_coordinates: np.ndarray
@@ -55,7 +54,7 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
 
     # Invalid genes instant fail
     if not gf.validate_gene(mutated_motions):
-        np.zeros(shape=settings.objective_count)
+        np.zeros(shape=len(c.OBJECTIVE_SET))
 
     numerical_differences = np.stack([motion.select_dtypes("number") for motion in mutated_motions])
     uniqueness_reward = gf.constraint_novelty_search(
@@ -86,7 +85,7 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
         ),
     )
 
-    # excitement = asyncio.run(gf.calculate_excitement(amended_experiment_name, frame_window=10))
+    excitement = asyncio.run(gf.calculate_excitement(amended_experiment_name, frame_window=10))
 
     f.consolidate_data(
         amended_experiment_name,
@@ -98,15 +97,12 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
 
     objectives_array: np.ndarray = np.array(
         [
-            -competitive_balance,
-            # -excitement,
-            -uniqueness_reward,
+            *[excitement if c.Objectives.excitement in c.OBJECTIVES_SET else []],
+            *[competitive_balance if c.Objectives.competitive_balance in c.OBJECTIVES_SET else []],
+            *[uniqueness_reward if c.Objectives.uniqueness in c.OBJECTIVES_SET else []],
         ],
         dtype=np.float64,
     )
-
-    if objectives_array.shape[0] != settings.objective_count:
-        raise RuntimeError(f"You set {settings.objective_count} objectives, but you tried to return {objectives_array.shape[0]}.")
 
     return objectives_array
 
@@ -114,7 +110,6 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
 class FightingIceProblem(Problem):
     def __init__(
         self,
-        objective_count: int,
         experiment_name: str,
         dask_client: Client,
         meta_subspace: MetaStateSubset,
@@ -125,7 +120,6 @@ class FightingIceProblem(Problem):
         **kwargs: Any,
     ) -> None:
 
-        self.objective_count: int = objective_count
         self.visual = visual
         self.experiment_name = experiment_name
         self.meta_space_subset: MetaStateSubset = meta_subspace
@@ -171,7 +165,7 @@ class FightingIceProblem(Problem):
         super().__init__(
             elementwise=False,
             **kwargs,
-            n_obj=objective_count,
+            n_obj=len(c.OBJECTIVE_SET),
             n_ieq_constr=0,
             xl=xl,
             xu=xu,
@@ -187,7 +181,6 @@ class FightingIceProblem(Problem):
         **kwargs: Any,
     ) -> None:
         eval_settings = IndividualSettings(
-            objective_count=self.objective_count,
             motion_coordinates=self.motion_coordinates,
             meta_subspace=self.meta_space_subset,
             mapped_numerical_motion_coordinates=self.numerical_mapped_motion_coordinates,
