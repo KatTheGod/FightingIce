@@ -67,8 +67,8 @@ if __name__ == "__main__":
             problem = FightingIceProblem(
                 experiment_name=experiment_name,
                 dask_client=client,
-                engine_multiplier=1,
-                no_matches=1,
+                engine_multiplier=4,
+                no_matches=3,
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
@@ -85,10 +85,10 @@ if __name__ == "__main__":
                         # n_dim=3,
                         # n_partitions=10,
                         n_dim=len(c.OBJECTIVE_SET),
-                        n_partitions=5,
+                        n_partitions=29,
                     ),
                     # Magic number is 20
-                    n_neighbors=2,
+                    n_neighbors=7,
                     decomposition=PBI(theta=10),
                     sampling=IntegerRandomSampling(),
                     crossover=SBX(prob=1.0, eta=20, vtype=int),
