@@ -125,7 +125,6 @@ pymoo
 pyparsing
 python-dateutil
 python-json-logger
-pywinpty
 PyYAML
 pyzmq
 referencing
