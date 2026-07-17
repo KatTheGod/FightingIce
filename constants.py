@@ -1,6 +1,7 @@
 import datetime
 import os
 from enum import StrEnum
+from pathlib import Path
 
 GLOBAL_SEED: int = 42
 
@@ -21,7 +22,7 @@ PARTITION: str = "regular"
 SCHEDULER_FILE: str | None = None
 BASE_PATH: str | None = None
 
-DEFAULT_MOTIONS_PATH: str = os.path.join("data", "characters")
+DEFAULT_MOTIONS_PATH: str = str(Path("data") / "characters")
 MOTIONS_FILE_NAME: str = "Motion.csv"
 CUSTOM_MOTION_PATH: str = "custom_motions"
 

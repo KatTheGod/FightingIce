@@ -45,7 +45,7 @@ if __name__ == "__main__":
         client = Client(cluster)
 
     print(f"Dask Dashboard available at: {client.dashboard_link}")
-    experiment_name: str = "meta_space_testers_"
+    experiment_name: str = "meta_space_testers_damage_v2"
     c.OBJECTIVE_SET = [
         c.Objectives.competitive_balance,
         c.Objectives.uniqueness,
@@ -53,6 +53,12 @@ if __name__ == "__main__":
 
     try:
         previous_result = f.resume_algorithm(None)
+        termination: any = get_termination(
+            c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
+            n_max_gen=10,
+            ftol=1e-6,
+            period=6,
+        )
 
         start_time = time.perf_counter()
         if previous_result is None:
@@ -61,12 +67,12 @@ if __name__ == "__main__":
             problem = FightingIceProblem(
                 experiment_name=experiment_name,
                 dask_client=client,
-                engine_multiplier=1,
-                no_matches=1,
+                engine_multiplier=5,
+                no_matches=2,
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
-                meta_subspace=meta_space.BASIC_STAND_A_B,
+                meta_subspace=meta_space.DAMAGE_V2,
             )
 
             res = minimize(
@@ -79,21 +85,16 @@ if __name__ == "__main__":
                         # n_dim=3,
                         # n_partitions=10,
                         n_dim=len(c.OBJECTIVE_SET),
-                        n_partitions=5,
+                        n_partitions=29,
                     ),
                     # Magic number is 20
-                    n_neighbors=2,
+                    n_neighbors=9,
                     decomposition=PBI(theta=10),
                     sampling=IntegerRandomSampling(),
                     crossover=SBX(prob=1.0, eta=20, vtype=int),
                     mutation=PolynomialMutation(prob=1.0, eta=20, vtype=int),
                 ),
-                termination=get_termination(
-                    c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
-                    n_max_gen=4,
-                    ftol=1e-6,
-                    period=2,
-                ),
+                termination=termination,
                 copy_algorithm=previous_result is None,
                 seed=c.GLOBAL_SEED,
                 save_history=True,
@@ -108,12 +109,8 @@ if __name__ == "__main__":
             problem.client = client
 
             current_gen_count: int = algorithm.n_gen
-            algorithm.termination = get_termination(
-                c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
-                n_max_gen=20 + current_gen_count,
-                ftol=1e-6,
-                period=6,
-            )
+            termination.n_max_gen += current_gen_count
+            algorithm.termination = termination
 
             # Manually run the minimize loop
             while algorithm.has_next():

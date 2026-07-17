@@ -172,7 +172,7 @@ async def orchestrate_matches(
             experiment_name,
             f"{character_name.lower()}.csv",
         )  #
-        for character_name in c.CHARACTER_ORDER.keys()
+        for character_name in c.CHARACTER_ORDER
     ]
 
     for path, mutated_motion in zip(custom_motion_paths, mutated_motions, strict=True):

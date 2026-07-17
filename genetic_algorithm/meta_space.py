@@ -700,25 +700,25 @@ DAMAGE = MetaStateSubset(
         ),
         # Guard Damage
         RangeLimit(
-            header_subset=[MotionHeadersEnum.ATTACK_HIT_DAMAGE],
+            header_subset=[MotionHeadersEnum.ATTACK_GUARD_DAMAGE],
             motions_names=PRIMARY_ACTIONS_ATTACK,
             min=0,
             max=5,
         ),
         RangeLimit(
-            header_subset=[MotionHeadersEnum.ATTACK_HIT_DAMAGE],
+            header_subset=[MotionHeadersEnum.ATTACK_GUARD_DAMAGE],
             motions_names=SECONDARY_ACTIONS_ATTACK,
             min=0,
             max=10,
         ),
         RangeLimit(
-            header_subset=[MotionHeadersEnum.ATTACK_HIT_DAMAGE],
+            header_subset=[MotionHeadersEnum.ATTACK_GUARD_DAMAGE],
             motions_names=TERTIARY_ACTIONS_ATTACK,
             min=2,
             max=15,
         ),
         RangeLimit(
-            header_subset=[MotionHeadersEnum.ATTACK_HIT_DAMAGE],
+            header_subset=[MotionHeadersEnum.ATTACK_GUARD_DAMAGE],
             motions_names=[ULTIMATE_ATTACK],
             min=15,
             max=50,
@@ -726,3 +726,41 @@ DAMAGE = MetaStateSubset(
     ],
 )
 add_to_collection(DAMAGE)
+
+DAMAGE_V2 = MetaStateSubset(
+    index=9,
+    name="damage-v2",
+    description="""
+        This is going to be similar to DAMAGE except we are going to remove guard damage from the equation
+    """,
+    header_subset=[MotionHeadersEnum.ATTACK_HIT_DAMAGE],
+    motion_subset=ATTACK_ACTIONS_ALL,
+    exclude_list=[(MotionNamesEnum.AIR_UB, MotionHeadersEnum.ATTACK_HIT_DAMAGE)],
+    limits=[
+        RangeLimit(
+            header_subset=[MotionHeadersEnum.ATTACK_HIT_DAMAGE],
+            motions_names=PRIMARY_ACTIONS_ATTACK,
+            min=2,
+            max=25,
+        ),
+        RangeLimit(
+            header_subset=[MotionHeadersEnum.ATTACK_HIT_DAMAGE],
+            motions_names=SECONDARY_ACTIONS_ATTACK,
+            min=5,
+            max=40,
+        ),
+        RangeLimit(
+            header_subset=[MotionHeadersEnum.ATTACK_HIT_DAMAGE],
+            motions_names=TERTIARY_ACTIONS_ATTACK,
+            min=10,
+            max=70,
+        ),
+        RangeLimit(
+            header_subset=[MotionHeadersEnum.ATTACK_HIT_DAMAGE],
+            motions_names=[ULTIMATE_ATTACK],
+            min=100,
+            max=200,
+        ),
+    ],
+)
+add_to_collection(DAMAGE_V2)
