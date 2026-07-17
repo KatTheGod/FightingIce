@@ -37,6 +37,7 @@ $$N = \binom{H + m - 1}{m - 1}$$
 $$\frac{n}{x_1^{-1}+\dots+x_n^{-1}} \quad s.t: 0\leq x_i \leq 1$$
 - The function for the competitive balance is:
 $$R(p)=e^{-\frac{(0.5-p)^2}{2\sigma^2}}$$
+- We edited Zen and Garnet's default motion, because they had in build invalid motions! Cancellable motion level when the motion wasn't cancellable...
 
 # Notes for Wednesday
 - fixed comp balance because of degen strategy with Garnet

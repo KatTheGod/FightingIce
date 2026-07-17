@@ -75,6 +75,7 @@ class ResultHolder:
 
 
 def replay_results_and_save(results: list[ResultHolder], save: bool = True, rerun_three: bool = False) -> None:
+    raise NotImplementedError("Need to accomodate for new meta_subspace")
     motion_adjustments: list[tuple[str, str]] = [
         (motion_names.STAND_A, headers.ATTACK_HIT_ADD_ENERGY),
         (motion_names.STAND_A, headers.ATTACK_GIVE_ENERGY),
@@ -122,7 +123,7 @@ def replay_results_and_save(results: list[ResultHolder], save: bool = True, reru
                 print(f"Evaluating solution {solution_index}/{len(result.solutions)}")
 
                 setting: IndividualSettings = IndividualSettings(
-                    motion_coordinates=motion_coordinates,
+                    meta_subspace=motion_coordinates,
                     mapped_numerical_motion_coordinates=numerical_mapped_motion_coordinates,
                     no_matches=8,
                     engine_multiplier=4,

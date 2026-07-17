@@ -16,7 +16,11 @@ import motion_classes.motion_editor as me
 import motion_classes.motion_headers as mh
 import motion_classes.motion_names as mn
 from genetic_algorithm.frame_data import parse_frame_data
-from genetic_algorithm.meta_space import MetaStateSubset, get_limit
+from genetic_algorithm.meta_space import (
+    MetaStateSubset,
+    RangeLimit,
+    get_limit,
+)
 
 
 # According to research, its just euclid distance between objects
@@ -295,7 +299,8 @@ async def orchestrate_matches(
         ],
     )
 
-    return win_rates
+    # We early return when we want the win rates without and editions
+    # return win_rates
 
     win_rates: np.ndarray = f.transform_win_rate_array(win_rates)
 
@@ -347,31 +352,6 @@ def map_numerical_motion_coordinates(motion_adjustments: list[tuple[str, str]]) 
             for motion, header in motion_adjustments
         ],
     )
-
-
-def generate_random_gene(
-    motion_adjustments: list[tuple[str, str]],
-    meta_subspace: MetaStateSubset,
-    character: c.CHARACTERS,
-) -> np.ndarray:
-    random_generator: np.random.Generator = np.random.default_rng(seed=1)
-
-    header_limits_container = []
-    for adjustment in motion_adjustments:
-        limit = get_limit(
-            meta_subspace=meta_subspace,
-            adjustment=adjustment,
-            character=character,
-        )
-        header_limits_container.append(
-            random_generator.integers(
-                low=limit.min,
-                high=limit.max + 1,
-                size=3,
-            ),
-        )
-
-    return np.stack(header_limits_container).T.flatten()
 
 
 # TODO, can be vectorized and sped up, but really, not the slow point in your code
@@ -520,13 +500,21 @@ async def calculate_excitement(experiment_name: str, tanh_scale: float = 3, fram
 def validate_gene(motions: list[pd.DataFrame]) -> bool:
     for motion in motions:
         frame_number: pd.Series = motion.loc[:, mh.MotionHeadersEnum.FRAME_NUMBER]
+        projectile_mask: pd.Series = (
+            (motion.loc[:, mh.MotionHeadersEnum.ATTACK_SPEED_X] > 0)  #
+            | (motion.loc[:, mh.MotionHeadersEnum.ATTACK_SPEED_Y] > 0)
+        )
 
         # Rule 1: Timing < frame number -> start up + active
         attack_up_time: pd.DataFrame = (
             motion.loc[:, mh.MotionHeadersEnum.ATTACK_START_UP]  #
             + motion.loc[:, mh.MotionHeadersEnum.ATTACK_ACTIVE]
         )
-        if (attack_up_time > frame_number).any():
+
+        invalid_uptime_motions: pd.Series = attack_up_time > frame_number
+        invalid_uptime_motions_excluding_projectiles: pd.Series = invalid_uptime_motions[~projectile_mask]
+
+        if invalid_uptime_motions_excluding_projectiles.any():
             return False
 
         # Rule 2: Hit-boxes: right >= left and bottom >= top
@@ -558,14 +546,79 @@ def validate_gene(motions: list[pd.DataFrame]) -> bool:
 
         # Rule 3: If cancellable frame, then shouldn't have cancellable frame motion
         motion_non_cancellable_indices: pd.Series = motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME] == -1
-        if (motion[motion_non_cancellable_indices].loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_MOTION_LEVEL] != -1).any():
+        non_cancellable_motions_cancellable_motion_level: pd.Series = motion[motion_non_cancellable_indices].loc[
+            :, mh.MotionHeadersEnum.CANCEL_ABLE_MOTION_LEVEL
+        ]
+        if (non_cancellable_motions_cancellable_motion_level != -1).any():
+            print(non_cancellable_motions_cancellable_motion_level[non_cancellable_motions_cancellable_motion_level == True])
             return False
 
-        # Rule 4: Cancel able frame number < frame number
-        if (
-            motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME]  #
-            >= frame_number
-        ).any():
+        # Rule 4: If canellable, then cancellable motion level can't be -1
+        cancellable_motion_mask: pd.Series = motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME] != -1
+        cancellable_motions_cancellable_motion_level: pd.Series = motion[cancellable_motion_mask].loc[
+            :, mh.MotionHeadersEnum.CANCEL_ABLE_MOTION_LEVEL
+        ]
+        if (cancellable_motions_cancellable_motion_level == -1).any():
+            return False
+
+        # Rule 5: Cancel able frame number < frame number
+        cancellable_motions_longer_than_frame_number: pd.Series = motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME] >= frame_number
+
+        if (cancellable_motions_longer_than_frame_number).any():
+            print(cancellable_motions_longer_than_frame_number[cancellable_motions_longer_than_frame_number == True])
             return False
 
     return True
+
+
+def get_motion_limits_for_characters(
+    meta_space_subset: MetaStateSubset,
+    motion_adjustments: np.ndarray,
+    character_list: dict[int, str] | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    number_of_characters: int = len(character_list)
+    if character_list is None:
+        character_list = c.CHARACTER_ORDER_REVERSE
+
+    gene_count: int = len(meta_space_subset.meta_subspace) * number_of_characters
+    xl = np.zeros(shape=gene_count, dtype=np.int64)
+    xu = np.zeros(shape=gene_count, dtype=np.int64)
+
+    for character_index in range(number_of_characters):
+        for index, adjustment in enumerate(motion_adjustments):
+            limit: RangeLimit = get_limit(
+                meta_subspace=meta_space_subset,
+                adjustment=adjustment,
+                character=character_list[character_index],
+            )
+
+            xl[character_index * (gene_count // number_of_characters) + index] = limit.min
+            xu[character_index * (gene_count // number_of_characters) + index] = limit.max
+
+    return xl, xu
+
+
+def create_random_gene(
+    meta_space_subset: MetaStateSubset,
+    character_list: dict[int, str] | None = None,
+) -> np.ndarray:
+    if character_list is None:
+        character_list = c.CHARACTER_ORDER_REVERSE
+
+    motion_limits_low, motion_limits_high = get_motion_limits_for_characters(
+        meta_space_subset=meta_space_subset,
+        motion_adjustments=meta_space_subset.meta_subspace,
+        character_list=character_list,
+    )
+    return (
+        np.random.default_rng()
+        .integers(
+            low=motion_limits_low,
+            high=motion_limits_high,
+            endpoint=False,
+        )
+        .reshape(
+            len(character_list),
+            -1,
+        )
+    )

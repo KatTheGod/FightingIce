@@ -18,8 +18,8 @@ import constants as c
 import functions as f
 from genetic_algorithm.genetic_functions import (
     constraint_novelty_search,
+    create_random_gene,
     gene_to_motions,
-    generate_random_gene,
     get_motion_coordinates,
     map_numerical_motion_coordinates,
     orchestrate_matches,
@@ -101,7 +101,8 @@ def generate_data(match_counts: np.ndarray, repeat_count: int = 10) -> None:
             print(f"repeat: {repeat}")
             start_time = time.perf_counter()
             results[repeat] = replay_single_mutation(
-                gene=generate_random_gene(motion_adjustments),
+                # TODO: Will have to fix this when we decide to use it again
+                gene=create_random_gene(motion_adjustments),
                 match_per_agent=match_count,
             )[1]
             times[repeat] = time.perf_counter() - start_time

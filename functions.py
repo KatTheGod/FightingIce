@@ -619,6 +619,11 @@ async def start_simulators(
         extra_commands = []
         is_extra_commands_empty = True
 
+    if isinstance(extra_commands, np.ndarray):
+        print(" ".join(extra_commands.flatten().tolist()))
+    else:
+        print(" ".join(extra_commands))
+
     simulators: list[asyncio.subprocess.Process] = []
     log_files: list[aiofiles.threadpool.text.AsyncTextIOWrapper] = []
     simulator_ready_events: list[asyncio.Event] = [asyncio.Event() for _ in range(no_engines)]
