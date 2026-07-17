@@ -47,6 +47,7 @@ class IndividualSettings:
     engine_multiplier: int
     game_duration_sec: int
     visual: bool
+    objective_set: list[c.Objectives]
 
 
 def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarray:
@@ -54,7 +55,7 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
 
     # Invalid genes instant fail
     if not gf.validate_gene(mutated_motions):
-        np.zeros(shape=len(c.OBJECTIVE_SET))
+        np.zeros(shape=len(settings.objective_set))
 
     numerical_differences = np.stack([motion.select_dtypes("number") for motion in mutated_motions])
     uniqueness_reward = gf.constraint_novelty_search(
@@ -97,9 +98,9 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
 
     objectives_array: np.ndarray = np.array(
         [
-            *[excitement if c.Objectives.excitement in c.OBJECTIVES_SET else []],
-            *[competitive_balance if c.Objectives.competitive_balance in c.OBJECTIVES_SET else []],
-            *[uniqueness_reward if c.Objectives.uniqueness in c.OBJECTIVES_SET else []],
+            *([excitement] if c.Objectives.excitement in settings.objective_set else []),
+            *([competitive_balance] if c.Objectives.competitive_balance in settings.objective_set else []),
+            *([uniqueness_reward] if c.Objectives.uniqueness in settings.objective_set else []),
         ],
         dtype=np.float64,
     )
@@ -137,7 +138,7 @@ class FightingIceProblem(Problem):
             if match:
                 experiment_name_number = max(-1, int(match.group(1)))
 
-        objectives_str = "-".join(c.OBJECTIVE_SET)
+        objectives_str = "_".join(c.OBJECTIVE_SET)
         self.experiment_name = f"{meta_subspace.index}_{objectives_str}_{experiment_name}_{experiment_name_number + 1}"
         print(f"Derived experiment name: {self.experiment_name}")
 
@@ -190,6 +191,7 @@ class FightingIceProblem(Problem):
             engine_multiplier=self.engine_multiplier,
             game_duration_sec=self.game_duration_sec,
             visual=self.visual,
+            objective_set=c.OBJECTIVE_SET,
         )
 
         futures = self.client.map(
