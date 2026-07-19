@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -p bigbatch
 #SBATCH -c 14
-#SBATCH -N 4
-#SBATCH -J t_dv2
+#SBATCH -N 12
+#SBATCH -J rr32
 #SBATCH --ntasks-per-node=1
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
@@ -16,7 +16,7 @@ mkdir -p dask_schedulers
 PROJECT_ROOT="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
-NODES=4
+NODES=12
 CORES=14
 BASE_PATH="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 DASK_FILE="${BASE_PATH}/dask_schedulers/dask_${SLURM_JOB_ID}.json"
@@ -41,4 +41,4 @@ srun --quiet \
     --nthreads $CORES \
     --resources "cores=$CORES" &
 
-conda run -n FI_3_12_13 python main.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH
+conda run -n FI_3_12_13 python experiments/round_robin.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH

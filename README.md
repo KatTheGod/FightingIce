@@ -64,3 +64,14 @@ $$R(p)=e^{-\frac{(0.5-p)^2}{2\sigma^2}}$$
 
 # Notes for long jobs
 - Please make sure that neutral has a cost of 0. This would kill some MCTS agent in some instances
+- New cluster restrictions
+
+| Name | MaxNodes | MaxWall | MaxJobs |
+|---|---|---|---|
+| mss_batch | 25 | - | 13 |
+| mss_bigba+ | 12 | - | 6 |
+| mss_stamp+ | 5 | - | 2 |
+| mss_biggpu | 2 | - | 1 |
+| mss_gpuex+ | 1 | - | 1 |
+| mss_afric+ | 3 | - | - |
+| mss_prime | 5 | - | - |

@@ -16,26 +16,26 @@ from motion_classes.motion_editor import DEFAULT_MOTION_LIST
 
 
 class AgentConfigRanges:
-    maxDepth: list[int] = np.arange(5, 30, 5).tolist()  # 5
-    ucbConstant: list[float] = [math.sqrt(2) / 2.0, math.sqrt(2), 2, 3]  # 4
-    rolloutDuration: list[int] = np.arange(30, 150, 30).tolist()  # 4
-    childCreationSimulationLimit: list[int] = np.arange(20, 80, 20).tolist()  # 3
-    maxTreeDepth: list[int] = np.arange(2, 12, 2).tolist()  # 5
-    minVisitCountBeforeRollout: list[int] = np.arange(5, 25, 5).tolist()  # 4
-    usedReversedActionList: list[bool] = [True, False]  # 2
+    max_depth: list[int] = np.arange(5, 30, 5).tolist()  # 5
+    ucb_constant: list[float] = [math.sqrt(2) / 2.0, math.sqrt(2), 2, 3]  # 4
+    rollout_duration: list[int] = np.arange(30, 150, 30).tolist()  # 4
+    child_creation_simulation_limit: list[int] = np.arange(20, 80, 20).tolist()  # 3
+    max_tree_depth: list[int] = np.arange(2, 12, 2).tolist()  # 5
+    min_visit_count_before_rollout: list[int] = np.arange(5, 25, 5).tolist()  # 4
+    used_reversed_action_list: list[bool] = [True, False]  # 2
 
     # Total = 9600
 
 
 def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tuple[np.ndarray, np.ndarray]:
     iteration_count = (
-        AgentConfigRanges.maxDepth.index(configuration[0])
-        * AgentConfigRanges.ucbConstant.index(configuration[1])
-        * AgentConfigRanges.rolloutDuration.index(configuration[2])
-        * AgentConfigRanges.childCreationSimulationLimit.index(configuration[3])
-        * AgentConfigRanges.maxTreeDepth.index(configuration[4])
-        * AgentConfigRanges.minVisitCountBeforeRollout.index(configuration[5])
-        * AgentConfigRanges.usedReversedActionList.index(configuration[6])
+        AgentConfigRanges.max_depth.index(configuration[0])
+        * AgentConfigRanges.ucb_constant.index(configuration[1])
+        * AgentConfigRanges.rollout_duration.index(configuration[2])
+        * AgentConfigRanges.child_creation_simulation_limit.index(configuration[3])
+        * AgentConfigRanges.max_tree_depth.index(configuration[4])
+        * AgentConfigRanges.min_visit_count_before_rollout.index(configuration[5])
+        * AgentConfigRanges.used_reversed_action_list.index(configuration[6])
     )
 
     no_matches: int = 12
@@ -43,7 +43,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
     engine_multiplier: int = 1
 
     win_rates: list[np.ndarray] = []
-    experiment_name: str = f"matchup_{iteration_count}_P1"
+    experiment_name: str = f"3200_matchup_{iteration_count}_P1"
     amended_experiment_name: str = f.append_time_uuid_experiment(experiment_name)
 
     environment: str = json.dumps(
@@ -93,7 +93,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
         ],
     )
 
-    experiment_name: str = f"matchup_{iteration_count}_P2"
+    experiment_name: str = f"3200_matchup_{iteration_count}_P2"
     amended_experiment_name: str = f.append_time_uuid_experiment(experiment_name)
     environment_name: str = "AGENT_CONFIG_P2"
 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     f.set_random_seeds(c.GLOBAL_SEED)
     f.arg_parser()
 
-    pathlib.Path(os.path.join(c.LOGS.EXPERIMENTS_FOLDER, c.LOGS.ROUND_ROBIN)).mkdir(parents=True, exist_ok=True)
+    (pathlib.Path(c.LOGS.EXPERIMENTS_FOLDER) / c.LOGS.ROUND_ROBIN).mkdir(parents=True, exist_ok=True)
 
     if c.SCHEDULER_FILE is not None:
         if not pathlib.Path(c.SCHEDULER_FILE).exists():
@@ -168,13 +168,13 @@ if __name__ == "__main__":
     configurations: list[int, float, int, int, int, int, bool] = list(
         product(
             *[
-                AgentConfigRanges.maxDepth,
-                AgentConfigRanges.ucbConstant,
-                AgentConfigRanges.rolloutDuration,
-                AgentConfigRanges.childCreationSimulationLimit,
-                AgentConfigRanges.maxTreeDepth,
-                AgentConfigRanges.minVisitCountBeforeRollout,
-                AgentConfigRanges.usedReversedActionList,
+                AgentConfigRanges.max_depth,
+                AgentConfigRanges.ucb_constant,
+                AgentConfigRanges.rollout_duration,
+                AgentConfigRanges.child_creation_simulation_limit,
+                AgentConfigRanges.max_tree_depth,
+                AgentConfigRanges.min_visit_count_before_rollout,
+                AgentConfigRanges.used_reversed_action_list,
             ],
         ),
     )
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     win_rates = client.gather(
         client.map(
             run_matchup,
-            configurations,
+            configurations[:3200],
             resources={"cores": 3},
         ),
     )
