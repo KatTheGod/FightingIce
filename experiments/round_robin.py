@@ -1,10 +1,9 @@
 import asyncio
 import json
 import math
-import os
-import pathlib
 import time
 from itertools import product
+from pathlib import Path
 
 import numpy as np
 from distributed import Client, LocalCluster
@@ -14,6 +13,8 @@ import functions as f
 import genetic_algorithm.genetic_functions as gf
 from motion_classes.motion_editor import DEFAULT_MOTION_LIST
 
+start_index = 0
+end_index = 3200
 
 class AgentConfigRanges:
     max_depth: list[int] = np.arange(5, 30, 5).tolist()  # 5
@@ -27,23 +28,15 @@ class AgentConfigRanges:
     # Total = 9600
 
 
-def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tuple[np.ndarray, np.ndarray]:
-    iteration_count = (
-        AgentConfigRanges.max_depth.index(configuration[0])
-        * AgentConfigRanges.ucb_constant.index(configuration[1])
-        * AgentConfigRanges.rollout_duration.index(configuration[2])
-        * AgentConfigRanges.child_creation_simulation_limit.index(configuration[3])
-        * AgentConfigRanges.max_tree_depth.index(configuration[4])
-        * AgentConfigRanges.min_visit_count_before_rollout.index(configuration[5])
-        * AgentConfigRanges.used_reversed_action_list.index(configuration[6])
-    )
+def run_matchup(indexed_configuration: tuple[int, list[int, float, int, int, int, int, bool]]) -> tuple[np.ndarray, np.ndarray]:
+    iteration_count, configuration = indexed_configuration
 
-    no_matches: int = 12
-    game_time: int = c.GAME_DURATION_SEC
+    no_matches: int = 1
+    game_time: int = 10
     engine_multiplier: int = 1
 
     win_rates: list[np.ndarray] = []
-    experiment_name: str = f"3200_matchup_{iteration_count}_P1"
+    experiment_name: str = f"{start_index}_{end_index}_matchup_{iteration_count}_P1"
     amended_experiment_name: str = f.append_time_uuid_experiment(experiment_name)
 
     environment: str = json.dumps(
@@ -81,6 +74,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
                 environment=environment,
                 environment_name=environment_name,
                 force_frame_data_unlink=True,
+                save_mutated_motions=False,
             ),
         ),
     )
@@ -93,7 +87,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
         ],
     )
 
-    experiment_name: str = f"3200_matchup_{iteration_count}_P2"
+    experiment_name: str = f"{start_index}_{end_index}_matchup_{iteration_count}_P2"
     amended_experiment_name: str = f.append_time_uuid_experiment(experiment_name)
     environment_name: str = "AGENT_CONFIG_P2"
 
@@ -119,6 +113,7 @@ def run_matchup(configuration: list[int, float, int, int, int, int, bool]) -> tu
                 environment=environment,
                 environment_name=environment_name,
                 force_frame_data_unlink=True,
+                save_mutated_motions=False,
             ),
         ),
     )
@@ -138,10 +133,10 @@ if __name__ == "__main__":
     f.set_random_seeds(c.GLOBAL_SEED)
     f.arg_parser()
 
-    (pathlib.Path(c.LOGS.EXPERIMENTS_FOLDER) / c.LOGS.ROUND_ROBIN).mkdir(parents=True, exist_ok=True)
+    (Path(c.LOGS.EXPERIMENTS_FOLDER) / c.LOGS.ROUND_ROBIN).mkdir(parents=True, exist_ok=True)
 
     if c.SCHEDULER_FILE is not None:
-        if not pathlib.Path(c.SCHEDULER_FILE).exists():
+        if not Path(c.SCHEDULER_FILE).exists():
             raise FileNotFoundError(f"Missing file: {c.SCHEDULER_FILE}.\nCannot start job at all")
 
         print("--- Running with Scheduler File ---")
@@ -184,7 +179,7 @@ if __name__ == "__main__":
     win_rates = client.gather(
         client.map(
             run_matchup,
-            configurations[:3200],
+            list(enumerate(configurations[start_index:end_index])),
             resources={"cores": 3},
         ),
     )
@@ -192,11 +187,12 @@ if __name__ == "__main__":
     end_time = time.perf_counter()
     print(f"time: {end_time - start_time}")
 
-    with open(
-        os.path.join(
-            c.LOGS.EXPERIMENTS_FOLDER,
-            c.LOGS.ROUND_ROBIN,
-            f"{(f.append_time_uuid_experiment('round_robin_results'))}.txt",
+    round_robin_results_name = f"{start_index}_{end_index}_round_robin_results"
+    with Path.open(
+        (
+            Path(c.LOGS.EXPERIMENTS_FOLDER)  #
+            / c.LOGS.ROUND_ROBIN
+            / f"{f.append_time_uuid_experiment(round_robin_results_name)}.txt"
         ),
         "a",
     ) as f:

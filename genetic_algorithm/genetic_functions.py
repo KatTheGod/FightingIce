@@ -161,6 +161,7 @@ async def orchestrate_matches(
     environment: str | None = None,
     environment_name: str | None = None,
     force_frame_data_unlink: bool = False,
+    save_mutated_motions: bool = True,
 ) -> float:
     c.NO_GAMES = no_matches
     c.POLL_INTERVAL_SEC = 0
@@ -175,30 +176,33 @@ async def orchestrate_matches(
         for character_name in c.CHARACTER_ORDER
     ]
 
-    for path, mutated_motion in zip(custom_motion_paths, mutated_motions, strict=True):
-        me.save_custom_motion(
-            motion=mutated_motion,
-            path=path,
-        )
-
-    argument_for_custom_motions: np.ndarray = np.full(shape=(3, 6), dtype=object, fill_value="")
+    argument_for_custom_motions = None
     character_order_combinations: list[tuple[int, int]] = list(combinations([0, 1, 2], 2))
-    # character_order_combinations: list[tuple[int, int]] = [
-    #     (0, 2),
-    #     (0, 2),
-    #     (0, 2),
-    # ]
-    for index, combination in enumerate(character_order_combinations):
-        argument_for_custom_motions[index, :] = np.array(
-            [
-                "--config-path",
-                "2",
-                c.CHARACTER_ORDER_REVERSE[combination[0]],
-                custom_motion_paths[combination[0]],
-                c.CHARACTER_ORDER_REVERSE[combination[1]],
-                custom_motion_paths[combination[1]],
-            ],
-        )
+
+    if save_mutated_motions:
+        for path, mutated_motion in zip(custom_motion_paths, mutated_motions, strict=True):
+            me.save_custom_motion(
+                motion=mutated_motion,
+                path=path,
+            )
+
+        argument_for_custom_motions: np.ndarray = np.full(shape=(3, 6), dtype=object, fill_value="")
+        # character_order_combinations: list[tuple[int, int]] = [
+        #     (0, 2),
+        #     (0, 2),
+        #     (0, 2),
+        # ]
+        for index, combination in enumerate(character_order_combinations):
+            argument_for_custom_motions[index, :] = np.array(
+                [
+                    "--config-path",
+                    "2",
+                    c.CHARACTER_ORDER_REVERSE[combination[0]],
+                    custom_motion_paths[combination[0]],
+                    c.CHARACTER_ORDER_REVERSE[combination[1]],
+                    custom_motion_paths[combination[1]],
+                ],
+            )
 
     common_commands = [
         "java",
@@ -300,7 +304,7 @@ async def orchestrate_matches(
     )
 
     # We early return when we want the win rates without and editions
-    # return win_rates
+    return win_rates
 
     win_rates: np.ndarray = f.transform_win_rate_array(win_rates)
 
