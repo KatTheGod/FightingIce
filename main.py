@@ -45,7 +45,7 @@ if __name__ == "__main__":
         client = Client(cluster)
 
     print(f"Dask Dashboard available at: {client.dashboard_link}")
-    experiment_name: str = "meta_space_testers_damage_v2"
+    experiment_name: str = "duration_test"
     c.OBJECTIVE_SET = [
         c.Objectives.competitive_balance,
         c.Objectives.uniqueness,
@@ -55,9 +55,9 @@ if __name__ == "__main__":
         previous_result = f.resume_algorithm(None)
         termination: any = get_termination(
             c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
-            n_max_gen=10,
+            n_max_gen=1,
             ftol=1e-6,
-            period=6,
+            period=1,
         )
 
         start_time = time.perf_counter()
@@ -67,8 +67,8 @@ if __name__ == "__main__":
             problem = FightingIceProblem(
                 experiment_name=experiment_name,
                 dask_client=client,
-                engine_multiplier=4,
-                no_matches=3,
+                engine_multiplier=5,
+                no_matches=2,
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
