@@ -384,7 +384,7 @@ def kill_process(process: asyncio.subprocess.Process) -> None:
             )
         # Linux/Mac
         else:
-            process.kill()
+            process.terminate()
 
 
 async def close_files(log_files: list[aiofiles.threadpool.text.AsyncTextIOWrapper]) -> None:
@@ -480,6 +480,13 @@ async def stop_orchestration(
     log_files: list[aiofiles.threadpool.text.AsyncTextIOWrapper],
 ) -> None:
     kill_processes(simulators, experiment_name)
+    # Wait for processes to exit so JVM flushes file buffers before consolidation reads them
+    for proc in simulators:
+        if proc.returncode is None:
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=5.0)
+            except asyncio.TimeoutError:
+                proc.kill()
     await asyncio.gather(*task_containers, return_exceptions=True)
     await close_files(log_files)
 

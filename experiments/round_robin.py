@@ -14,7 +14,7 @@ import genetic_algorithm.genetic_functions as gf
 from motion_classes.motion_editor import DEFAULT_MOTION_LIST
 
 start_index = 0
-end_index = 3200
+end_index = 1000
 
 class AgentConfigRanges:
     max_depth: list[int] = np.arange(5, 30, 5).tolist()  # 5
