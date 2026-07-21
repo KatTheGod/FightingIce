@@ -14,7 +14,7 @@ import genetic_algorithm.genetic_functions as gf
 from motion_classes.motion_editor import DEFAULT_MOTION_LIST
 
 start_index = 0
-end_index = 1000
+end_index = 500
 
 class AgentConfigRanges:
     max_depth: list[int] = np.arange(5, 30, 5).tolist()  # 5
@@ -31,8 +31,8 @@ class AgentConfigRanges:
 def run_matchup(indexed_configuration: tuple[int, list[int, float, int, int, int, int, bool]]) -> tuple[np.ndarray, np.ndarray]:
     iteration_count, configuration = indexed_configuration
 
-    no_matches: int = 1
-    game_time: int = 10
+    no_matches: int = 12
+    game_time: int = c.GAME_DURATION_SEC
     engine_multiplier: int = 1
 
     win_rates: list[np.ndarray] = []
