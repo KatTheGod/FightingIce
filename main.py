@@ -55,7 +55,7 @@ if __name__ == "__main__":
         previous_result = f.resume_algorithm(None)
         termination: any = get_termination(
             c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
-            n_max_gen=1,
+            n_max_gen=10,
             ftol=1e-6,
             period=1,
         )
