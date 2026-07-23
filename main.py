@@ -45,7 +45,7 @@ if __name__ == "__main__":
         client = Client(cluster)
 
     print(f"Dask Dashboard available at: {client.dashboard_link}")
-    experiment_name: str = "mse_character_speed"
+    experiment_name: str = "mse_hit_boxes"
     # c.OBJECTIVE_SET = [
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
@@ -78,7 +78,7 @@ if __name__ == "__main__":
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
-                meta_subspace=meta_space.CHARACTER_SPEED,
+                meta_subspace=meta_space.HIT_BOXES,
             )
 
             res = minimize(
