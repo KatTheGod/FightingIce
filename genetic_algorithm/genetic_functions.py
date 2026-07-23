@@ -304,7 +304,7 @@ async def orchestrate_matches(
     )
 
     # We early return when we want the win rates without and editions
-    # return win_rates
+    return win_rates
 
     win_rates: np.ndarray = f.transform_win_rate_array(win_rates)
 
