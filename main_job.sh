@@ -39,6 +39,7 @@ srun --quiet \
     conda run --no-capture-output -n FI_3_12_13 dask worker \
     --scheduler-file $DASK_FILE \
     --nthreads $CORES \
-    --resources "cores=$CORES" &
+    --resources "cores=$CORES" \
+    --no-nanny &
 
 conda run -n FI_3_12_13 python main.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH
