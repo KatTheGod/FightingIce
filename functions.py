@@ -868,5 +868,5 @@ def set_random_seeds(seed: int) -> None:
 
 
 def create_experiments_sub_folders() -> None:
-    pathlib.Path(os.path.join(c.LOGS.EXPERIMENTS_FOLDER, c.LOGS.ROUND_ROBIN)).mkdir(exist_ok=True, parents=True)
-    pathlib.Path(os.path.join(c.LOGS.EXPERIMENTS_FOLDER, c.LOGS.META_DISCOVERY)).mkdir(exist_ok=True, parents=True)
+    pathlib.Path(os.path.join(c.Directories.EXPERIMENTS_FOLDER, c.Directories.ROUND_ROBIN)).mkdir(exist_ok=True, parents=True)
+    pathlib.Path(os.path.join(c.Directories.EXPERIMENTS_FOLDER, c.Directories.META_DISCOVERY)).mkdir(exist_ok=True, parents=True)

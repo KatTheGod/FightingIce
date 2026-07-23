@@ -45,11 +45,16 @@ if __name__ == "__main__":
         client = Client(cluster)
 
     print(f"Dask Dashboard available at: {client.dashboard_link}")
-    experiment_name: str = "duration_test"
-    c.OBJECTIVE_SET = [
-        c.Objectives.competitive_balance,
-        c.Objectives.uniqueness,
-    ]
+    experiment_name: str = "mse_character_speed"
+    # c.OBJECTIVE_SET = [
+    #     c.Objectives.competitive_balance,
+    #     c.Objectives.uniqueness,
+    # ]
+
+    # TODO: COMPLETE ME
+    # We are going to continue / start an experiment
+    # TODO: Keep engines running
+    # TODO: Run experiments to see how many cores we can cram into simulations, check win-rate stability
 
     try:
         previous_result = f.resume_algorithm(None)
@@ -57,10 +62,11 @@ if __name__ == "__main__":
             c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
             n_max_gen=10,
             ftol=1e-6,
-            period=1,
+            period=4,
         )
 
         start_time = time.perf_counter()
+        # 30 Games
         if previous_result is None:
             print("New experiment")
             current_gen_count: int = 0
@@ -68,11 +74,11 @@ if __name__ == "__main__":
                 experiment_name=experiment_name,
                 dask_client=client,
                 engine_multiplier=5,
-                no_matches=2,
+                no_matches=6,
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
-                meta_subspace=meta_space.DAMAGE_V2,
+                meta_subspace=meta_space.CHARACTER_SPEED,
             )
 
             res = minimize(
@@ -82,13 +88,14 @@ if __name__ == "__main__":
                     # Must be greater than n_neighbors
                     ref_dirs=get_reference_directions(
                         c.pymoo.MOEAD.SpreadType.DAS_DENNIS,
-                        # n_dim=3,
-                        # n_partitions=10,
+                        # participants = 66
+                        n_partitions=10,
                         n_dim=len(c.OBJECTIVE_SET),
-                        n_partitions=29,
+                        # n_partitions=29,
                     ),
                     # Magic number is 20
-                    n_neighbors=7,
+                    # n_neighbors=7,
+                    n_neighbors=15,
                     decomposition=PBI(theta=10),
                     sampling=IntegerRandomSampling(),
                     crossover=SBX(prob=1.0, eta=20, vtype=int),
@@ -129,7 +136,13 @@ if __name__ == "__main__":
         end_time = time.perf_counter()
         print(f"time: {end_time - start_time}")
 
-        with pathlib.Path.open(f"{experiment_name}.pkl", "wb") as res_file:
+        with pathlib.Path.open(
+            str(
+                pathlib.Path(c.Directories.DUMP_FILES)  #
+                / f"{experiment_name}.pkl"
+            ),
+            "wb",
+        ) as res_file:
             dill.dump(res, res_file)
     finally:
         client.shutdown()

@@ -33,6 +33,13 @@ MAX_PROJECTILE_FRAME_COUNT: int = 600
 MAX_HIT_BOX_WIDTH: int = 300
 MAX_HIT_BOX_HEIGHT: int = 200
 
+class Directories(StrEnum):
+    EXPERIMENTS_FOLDER: str = "experiments"
+    ROUND_ROBIN: str = "round_robin"
+    META_DISCOVERY: str = "meta_discovery"
+    DUMP_FILES: str = "dump_files"
+    ROUND_ROBIN_PROGRESS: str = "progress"
+    GENETIC_PROGRESS: str = "genetic_progress"
 
 class LOGS:
     ENGINES: str = "engines"
@@ -44,11 +51,6 @@ class LOGS:
     DASK_LOGS: str = "dask_logs"
     SOLUTION_EXPLORER: str = "solution_explorer"
     PLOTS: str = "plots"
-
-    # Experiments related content
-    EXPERIMENTS_FOLDER: str = "experiments"
-    ROUND_ROBIN: str = "round_robin"
-    META_DISCOVERY: str = "meta_discovery"
 
     KNOWN_LOGS: list[str] = [
         ENGINES,
