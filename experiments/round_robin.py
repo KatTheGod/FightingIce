@@ -13,8 +13,8 @@ import functions as f
 import genetic_algorithm.genetic_functions as gf
 from motion_classes.motion_editor import DEFAULT_MOTION_LIST
 
-start_index = 500
-end_index = 1500
+start_index = 1500
+end_index = 3500
 
 
 class AgentConfigRanges:
