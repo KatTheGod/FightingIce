@@ -24,7 +24,6 @@ BASE_PATH: str | None = None
 
 DEFAULT_MOTIONS_PATH: str = str(Path("data") / "characters")
 MOTIONS_FILE_NAME: str = "Motion.csv"
-CUSTOM_MOTION_PATH: str = "custom_motions"
 
 MAX_ATTACK_SPEED_X: int = 25
 MAX_ATTACK_SPEED_Y: int = 15
@@ -33,13 +32,19 @@ MAX_PROJECTILE_FRAME_COUNT: int = 600
 MAX_HIT_BOX_WIDTH: int = 300
 MAX_HIT_BOX_HEIGHT: int = 200
 
+
 class Directories(StrEnum):
     EXPERIMENTS_FOLDER: str = "experiments"
     ROUND_ROBIN: str = "round_robin"
     META_DISCOVERY: str = "meta_discovery"
     DUMP_FILES: str = "dump_files"
     ROUND_ROBIN_PROGRESS: str = "progress"
-    GENETIC_PROGRESS: str = "genetic_progress"
+    DASK_LOGS: str = "dask_logs"
+    DASK_SCHEDULERS: str = "dask_schedulers"
+    SOLUTION_EXPLORER: str = "solution_explorer"
+    PLOTS: str = "plots"
+    CUSTOM_MOTIONS: str = "custom_motions"
+
 
 class LOGS:
     ENGINES: str = "engines"
@@ -48,9 +53,6 @@ class LOGS:
     POINT: str = "point"
     REPLAY: str = "replay"
     SOUND: str = "sound"
-    DASK_LOGS: str = "dask_logs"
-    SOLUTION_EXPLORER: str = "solution_explorer"
-    PLOTS: str = "plots"
 
     KNOWN_LOGS: list[str] = [
         ENGINES,
@@ -154,9 +156,11 @@ class pymoo:
 start_time = 0
 end_time = 0
 
+
 class Objectives(StrEnum):
     excitement: str = "ex"
     competitive_balance: str = "cb"
     uniqueness: str = "uq"
+
 
 OBJECTIVE_SET: list[Objectives] = list(Objectives)

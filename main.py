@@ -1,4 +1,4 @@
-import pathlib
+from pathlib import Path
 import time
 
 import dill
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     f.arg_parser()
 
     if c.SCHEDULER_FILE is not None:
-        if not pathlib.Path(c.SCHEDULER_FILE).exists():
+        if not Path(c.SCHEDULER_FILE).exists():
             raise FileNotFoundError(f"Missing file: {c.SCHEDULER_FILE}.\nCannot start job at all")
 
         print("--- Running with Scheduler File ---")
@@ -136,9 +136,10 @@ if __name__ == "__main__":
         end_time = time.perf_counter()
         print(f"time: {end_time - start_time}")
 
-        with pathlib.Path.open(
+        Path(c.Directories.DUMP_FILES).mkdir(exist_ok=True, parents=True)
+        with Path.open(
             str(
-                pathlib.Path(c.Directories.DUMP_FILES)  #
+                Path(c.Directories.DUMP_FILES)  #
                 / f"{experiment_name}.pkl"
             ),
             "wb",

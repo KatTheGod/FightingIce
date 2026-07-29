@@ -129,19 +129,6 @@ class FightingIceProblem(Problem):
         self.game_duration_sec = game_duration_sec
         self.client = dask_client
 
-        # Going to adjust the experiment name if its already in use
-        pathlib.Path(c.CUSTOM_MOTION_PATH).mkdir(parents=True, exist_ok=True)
-        experiment_name_regex = re.compile(rf"{self.meta_space_subset.index}_{experiment_name}_(\d+).*")
-        experiment_name_number: int = -1
-        for directory in pathlib.Path(c.CUSTOM_MOTION_PATH).iterdir():
-            match = experiment_name_regex.match(directory.name)
-            if match:
-                experiment_name_number = max(-1, int(match.group(1)))
-
-        objectives_str = "_".join(c.OBJECTIVE_SET)
-        self.experiment_name = f"{meta_subspace.index}_{objectives_str}_{experiment_name}_{experiment_name_number + 1}"
-        print(f"Derived experiment name: {self.experiment_name}")
-
         self.motion_adjustments: list[tuple[str, str]] = meta_mapper.to_meta_subspace(self.meta_space_subset.meta_subspace)
         self.motion_coordinates: np.ndarray = gf.get_motion_coordinates(self.motion_adjustments)
         self.numerical_mapped_motion_coordinates = gf.map_numerical_motion_coordinates(self.motion_adjustments)

@@ -16,6 +16,7 @@ from motion_classes.motion_editor import DEFAULT_MOTION_LIST
 start_index = 500
 end_index = 1500
 
+
 class AgentConfigRanges:
     max_depth: list[int] = np.arange(5, 30, 5).tolist()  # 5
     ucb_constant: list[float] = [math.sqrt(2) / 2.0, math.sqrt(2), 2, 3]  # 4
@@ -30,6 +31,12 @@ class AgentConfigRanges:
 
 def run_matchup(indexed_configuration: tuple[int, list[int, float, int, int, int, int, bool]]) -> tuple[np.ndarray, np.ndarray]:
     iteration_count, configuration = indexed_configuration
+    iteration_count += start_index
+
+    """
+        # We are going to skip this matchup if it has already been ran
+        # Unique identifiers are: 
+    """
 
     no_matches: int = 12
     game_time: int = c.GAME_DURATION_SEC
@@ -126,6 +133,13 @@ def run_matchup(indexed_configuration: tuple[int, list[int, float, int, int, int
         ],
     )
 
+    """
+        We are going to save the progress of the runs such that we dont rerun jobs that have completed.
+        We are doing this because the cluster can sometimes run into errors and jobs can stop partway.
+        Relying on your code working this way is always a bad idea, and we should have done this long ago
+    """
+
+
     return tuple(win_rates)
 
 
@@ -133,7 +147,10 @@ if __name__ == "__main__":
     f.set_random_seeds(c.GLOBAL_SEED)
     f.arg_parser()
 
-    (Path(c.LOGS.EXPERIMENTS_FOLDER) / c.LOGS.ROUND_ROBIN).mkdir(parents=True, exist_ok=True)
+    (
+        Path(c.Directories.EXPERIMENTS_FOLDER)  #
+        / c.Directories.ROUND_ROBIN
+    ).mkdir(parents=True, exist_ok=True)
 
     if c.SCHEDULER_FILE is not None:
         if not Path(c.SCHEDULER_FILE).exists():
@@ -190,8 +207,8 @@ if __name__ == "__main__":
     round_robin_results_name = f"{start_index}_{end_index}_round_robin_results"
     with Path.open(
         (
-            Path(c.LOGS.EXPERIMENTS_FOLDER)  #
-            / c.LOGS.ROUND_ROBIN
+            Path(c.Directories.EXPERIMENTS_FOLDER)  #
+            / c.Directories.ROUND_ROBIN
             / f"{f.append_time_uuid_experiment(round_robin_results_name)}.txt"
         ),
         "a",

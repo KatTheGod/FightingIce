@@ -3,7 +3,6 @@ import asyncio
 import datetime
 import math
 import os
-import pathlib
 import random
 import re
 import shutil
@@ -14,6 +13,8 @@ import zipfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from itertools import islice
+from pathlib import Path
+from types import SimpleNamespace
 
 import aiofiles
 import dill
@@ -226,7 +227,7 @@ def consolidate_data(
         exclude_list = []
 
     # We will first throw an error if you add a folder to the logs that we are not aware of
-    directory: pathlib.Path = pathlib.Path("log")
+    directory: Path = Path("log")
     directory.mkdir(
         exist_ok=True,
         parents=True,
@@ -250,10 +251,12 @@ def consolidate_data(
             )
 
     # Going to first compress the motions in custom motions
-    if c.ZIP_FILES and c.CUSTOM_MOTION_PATH not in exclude_list:
-        custom_motion_folder_path = pathlib.Path(os.path.join(c.CUSTOM_MOTION_PATH, experiment_name))
+    if c.ZIP_FILES and c.Directories.CUSTOM_MOTIONS not in exclude_list:
+        custom_motion_folder_path = Path(os.path.join(c.Directories.CUSTOM_MOTIONS, experiment_name))
         if custom_motion_folder_path.exists():
-            shutil.make_archive(base_name=str(custom_motion_folder_path), format="zip", root_dir=c.CUSTOM_MOTION_PATH, base_dir=experiment_name)
+            shutil.make_archive(
+                base_name=str(custom_motion_folder_path), format="zip", root_dir=c.Directories.CUSTOM_MOTIONS, base_dir=experiment_name
+            )
 
             purge_directory(str(custom_motion_folder_path), True)
 
@@ -261,7 +264,7 @@ def consolidate_data(
         if log_group_name in exclude_list:
             continue
 
-        log_group: pathlib.Path = directory.joinpath(log_group_name)
+        log_group: Path = directory.joinpath(log_group_name)
         log_group.mkdir(
             exist_ok=True,
             parents=True,
@@ -278,13 +281,13 @@ def consolidate_data(
         for time_stamp in time_stamps:
             experiment_regex: re.Pattern = re.compile(rf"{re.escape(experiment_name)}.*?{re.escape(time_stamp)}")
 
-            experiment_files: list[pathlib.Path] = []
+            experiment_files: list[Path] = []
             for experiment in file_names:
                 if experiment_regex.match(experiment):
                     experiment_files.append(directory.joinpath(log_group_name, experiment))
 
             file_extension = file_names[0].split(".")[-1]
-            consolidated_file_name: pathlib.Path = directory.joinpath(log_group_name, f"{experiment_name}-{time_stamp}.{file_extension}")
+            consolidated_file_name: Path = directory.joinpath(log_group_name, f"{experiment_name}-{time_stamp}.{file_extension}")
 
             if len(experiment_files) == 0:
                 continue
@@ -691,8 +694,8 @@ async def start_simulators(
 
 
 # GPT Function, not important to know how to delete files in folder
-def purge_directory(target_dir: str | pathlib.Path, remove_root: bool = False) -> None:
-    root = pathlib.Path(target_dir)
+def purge_directory(target_dir: str | Path, remove_root: bool = False) -> None:
+    root = Path(target_dir)
 
     if not root.exists():
         print(f"Path {root} does not exist.")
@@ -772,7 +775,7 @@ def transform_win_rate(win_rate: float, sigma: float = 0.20) -> np.ndarray:
 
 def get_port_number_from_engine_logs(experiment_name: str, pid: int) -> int | None:
     try:
-        engine_logs_path = pathlib.Path(os.path.join("log", "engines", f"{experiment_name}-pid-{pid}-{c.GAME_TIME}.log"))
+        engine_logs_path = Path(os.path.join("log", "engines", f"{experiment_name}-pid-{pid}-{c.GAME_TIME}.log"))
         with open(engine_logs_path) as file:
             content: str = "".join(list(islice(file, 10)))
             pattern: re.Pattern = re.compile(r"<PORT>:(\d+)")
@@ -847,26 +850,21 @@ def append_time_uuid_experiment(experiment_name: str) -> str:
     return f"{experiment_name}_iter_{experiment_suffix_time}_{experiment_suffix_uuid}"
 
 
-def resume_algorithm(plk_name: str | None, throw_error: bool = False) -> Result | None:
+def resume_algorithm(plk_name: str | None, throw_error: bool = False) -> SimpleNamespace | None:
     if plk_name is None:
         return None
 
-    plk_path: pathlib.Path = pathlib.Path(plk_name)
+    plk_path: Path = Path(plk_name)
 
     if not plk_path.exists():
         if throw_error:
             raise FileNotFoundError(f"Failed to find file: {plk_path}")
         return None
 
-    with open(plk_path, "rb") as res_file:
+    with Path.open(plk_path, "rb") as res_file:
         return dill.load(res_file)
 
 
 def set_random_seeds(seed: int) -> None:
     np.random.seed(seed)
     random.seed(seed)
-
-
-def create_experiments_sub_folders() -> None:
-    pathlib.Path(os.path.join(c.Directories.EXPERIMENTS_FOLDER, c.Directories.ROUND_ROBIN)).mkdir(exist_ok=True, parents=True)
-    pathlib.Path(os.path.join(c.Directories.EXPERIMENTS_FOLDER, c.Directories.META_DISCOVERY)).mkdir(exist_ok=True, parents=True)

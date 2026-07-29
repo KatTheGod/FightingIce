@@ -90,7 +90,7 @@ def generate_data(match_counts: np.ndarray, repeat_count: int = 10) -> None:
     if job_id is None:
         job_id = uuid.uuid4().hex
 
-    pathlib.Path(os.path.join(c.LOGS.SOLUTION_EXPLORER, "logs", job_id)).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(os.path.join(c.Directories.SOLUTION_EXPLORER, "logs", job_id)).mkdir(parents=True, exist_ok=True)
 
     print(f"generating data for job {job_id}")
     for match_count in match_counts:
@@ -109,7 +109,7 @@ def generate_data(match_counts: np.ndarray, repeat_count: int = 10) -> None:
 
         np.savetxt(
             fname=os.path.join(
-                c.LOGS.SOLUTION_EXPLORER,
+                c.Directories.SOLUTION_EXPLORER,
                 "logs",
                 job_id,
                 f"match_count_{match_count}.csv",
@@ -121,7 +121,7 @@ def generate_data(match_counts: np.ndarray, repeat_count: int = 10) -> None:
 
         np.savetxt(
             fname=os.path.join(
-                c.LOGS.SOLUTION_EXPLORER,
+                c.Directories.SOLUTION_EXPLORER,
                 "logs",
                 job_id,
                 f"match_time_{match_count}.csv",

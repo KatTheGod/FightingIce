@@ -12,12 +12,15 @@ for log_group_name in c.LOGS.KNOWN_LOGS:
 
 
 print("purging custom motions")
-f.purge_directory(c.CUSTOM_MOTION_PATH, remove_root=False)
+f.purge_directory(c.Directories.CUSTOM_MOTIONS, remove_root=False)
 
 print("purging dask logs")
-f.purge_directory(c.LOGS.DASK_LOGS, remove_root=False)
+f.purge_directory(c.Directories.DASK_LOGS, remove_root=False)
+
+print("purging dask schedulers")
+f.purge_directory(c.Directories.DASK_SCHEDULERS, remove_root=False)
 
 print("purge solution replay logs")
-f.purge_directory(pathlib.Path(c.LOGS.SOLUTION_EXPLORER) / "logs")
+f.purge_directory(pathlib.Path(c.Directories.SOLUTION_EXPLORER) / "logs")
 
 print("done\n")

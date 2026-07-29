@@ -10,8 +10,10 @@ Examples:
 """
 
 import math
+import re
 from dataclasses import dataclass, field, replace
 from itertools import product
+from pathlib import Path
 
 import constants as c
 from genetic_algorithm.meta_mapper import MapperType
@@ -122,6 +124,27 @@ class MetaStateSubset:
             )
 
         self.uniqueness_limit: float = math.sqrt(self.uniqueness_limit)
+
+    def derive_experiment_name(self, experiment_name: str, unique: bool = False) -> str:
+        experiment_name_number: int = -1
+
+        if unique:
+            # Going to adjust the experiment name if its already in use
+            Path(c.Directories.CUSTOM_MOTIONS).mkdir(parents=True, exist_ok=True)
+            experiment_name_regex = re.compile(rf"{self.index}_{experiment_name}_(\d+).*")
+            for directory in Path(c.Directories.CUSTOM_MOTIONS).iterdir():
+                match = experiment_name_regex.match(directory.name)
+                if match:
+                    experiment_name_number = max(-1, int(match.group(1)))
+
+        objectives_str = "_".join(c.OBJECTIVE_SET)
+        derived_experiment_name = f"{self.index}_{objectives_str}_{experiment_name}"
+
+        return (
+            f"{derived_experiment_name}_{experiment_name_number + 1}"  #
+            if unique
+            else derived_experiment_name
+        )
 
 
 META_SUBSPACE_COLLECTION: dict[int, MetaStateSubset] = {}

@@ -169,7 +169,7 @@ async def orchestrate_matches(
 
     custom_motion_paths: list[str] = [
         os.path.join(
-            c.CUSTOM_MOTION_PATH,
+            c.Directories.CUSTOM_MOTIONS,
             experiment_name,
             f"{character_name.lower()}.csv",
         )  #

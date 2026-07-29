@@ -6,6 +6,7 @@ log/
 out/
 err/
 dask_logs/
+dask_schedulers/
 solution_explorer/logs/*
 experiments/round_robin
 plots/
