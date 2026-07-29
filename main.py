@@ -1,5 +1,5 @@
-from pathlib import Path
 import time
+from pathlib import Path
 
 import dill
 from distributed import Client, LocalCluster
@@ -45,7 +45,7 @@ if __name__ == "__main__":
         client = Client(cluster)
 
     print(f"Dask Dashboard available at: {client.dashboard_link}")
-    experiment_name: str = "mse_hit_boxes"
+    experiment_name: str = "mse_character_speed"
     # c.OBJECTIVE_SET = [
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
@@ -78,7 +78,7 @@ if __name__ == "__main__":
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
-                meta_subspace=meta_space.HIT_BOXES,
+                meta_subspace=meta_space.CHARACTER_SPEED,
             )
 
             res = minimize(
@@ -108,6 +108,7 @@ if __name__ == "__main__":
                 verbose=True,
             )
         else:
+            # This only works for COMPLETED terminations, can't stop midway
             print("Continuing experiment")
             problem: FightingIceProblem = previous_result.problem
             algorithm: Algorithm = previous_result.algorithm
@@ -116,6 +117,7 @@ if __name__ == "__main__":
             problem.client = client
 
             current_gen_count: int = algorithm.n_gen
+            # This might not work, worth checking
             termination.n_max_gen += current_gen_count
             algorithm.termination = termination
 
