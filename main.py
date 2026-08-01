@@ -79,7 +79,7 @@ if __name__ == "__main__":
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
-                meta_subspace=meta_space.CHARACTER_SPEED,
+                meta_subspace=meta_subspace,
             )
 
             """
@@ -87,7 +87,7 @@ if __name__ == "__main__":
                     36 * 10 -> 460 Simulations
                     5 * 6 -> 30 Games per simulation
                     30 * 360 -> 10800 Games
-                    
+
                 Cluster Capabilities:
                     Nodes == 5
                     Cores == 16
