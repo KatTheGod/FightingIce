@@ -45,7 +45,8 @@ if __name__ == "__main__":
         client = Client(cluster)
 
     print(f"Dask Dashboard available at: {client.dashboard_link}")
-    experiment_name: str = "mse_character_speed"
+    meta_subspace = meta_space.CHARACTER_SPEED
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_character_speed")
     # c.OBJECTIVE_SET = [
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
@@ -81,6 +82,25 @@ if __name__ == "__main__":
                 meta_subspace=meta_space.CHARACTER_SPEED,
             )
 
+            """
+                Time Estimation:
+                    36 * 10 -> 460 Simulations
+                    5 * 6 -> 30 Games per simulation
+                    30 * 360 -> 10800 Games
+                    
+                Cluster Capabilities:
+                    Nodes == 5
+                    Cores == 16
+
+                    -> each node handles 1 individual
+                    10800 / 5 -> 2160 Games in sequence
+
+                Time Estimations
+                    Minutes:
+                        1.0: 36 hours
+                        1.5: 54 hours
+                        2.0:  72 hours (Hanging on limit)
+            """
             res = minimize(
                 problem=problem,
                 algorithm=MOEAD(
@@ -88,14 +108,15 @@ if __name__ == "__main__":
                     # Must be greater than n_neighbors
                     ref_dirs=get_reference_directions(
                         c.pymoo.MOEAD.SpreadType.DAS_DENNIS,
-                        # participants = 66
-                        n_partitions=10,
+                        # n_partitions=10 == 66
+                        n_partitions=7, # == 36
                         n_dim=len(c.OBJECTIVE_SET),
                         # n_partitions=29,
                     ),
                     # Magic number is 20
                     # n_neighbors=7,
-                    n_neighbors=15,
+                    # n_neighbors=15, Used for 66 individuals
+                    n_neighbors=8,
                     decomposition=PBI(theta=10),
                     sampling=IntegerRandomSampling(),
                     crossover=SBX(prob=1.0, eta=20, vtype=int),

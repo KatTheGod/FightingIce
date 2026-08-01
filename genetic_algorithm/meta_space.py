@@ -125,7 +125,7 @@ class MetaStateSubset:
 
         self.uniqueness_limit: float = math.sqrt(self.uniqueness_limit)
 
-    def derive_experiment_name(self, experiment_name: str, unique: bool = False) -> str:
+    def derive_experiment_name(self, experiment_name: str, unique: bool = True) -> str:
         experiment_name_number: int = -1
 
         if unique:
