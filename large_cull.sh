@@ -14,11 +14,11 @@ mkdir -p "$OUTPUT_DIR"
 exec > >(tee -a "$OUTPUT_FILE") 2>&1
 
 targets=(
-    "$PROJECT_DIR/log/frameData_old_1805997"
-    "$PROJECT_DIR/err"
-    "$PROJECT_DIR/out"
+    # "$PROJECT_DIR/err"
+    # "$PROJECT_DIR/out"
     "$PROJECT_DIR/log/engines"
     "$PROJECT_DIR/log/frameData"
+    "$PROJECT_DIR/log/frameData_old_1805997"
     "$PROJECT_DIR/log/motions"
     "$PROJECT_DIR/log/point"
     "$PROJECT_DIR/log/replay"
