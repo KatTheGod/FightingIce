@@ -45,12 +45,12 @@ if __name__ == "__main__":
         client = Client(cluster)
 
     print(f"Dask Dashboard available at: {client.dashboard_link}")
-    meta_subspace = meta_space.CHARACTER_SPEED
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_character_speed")
     # c.OBJECTIVE_SET = [
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
+    meta_subspace = meta_space.CHARACTER_SPEED
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_character_speed")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
