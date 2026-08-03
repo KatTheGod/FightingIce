@@ -28,29 +28,15 @@ targets=(
     "$PROJECT_DIR/solution_explorer/logs"
 )
 
-# Prints a heartbeat every 5 seconds until the directory disappears
-monitor_progress() {
-    local dir="$1"
-    local label="$2"
-    while [ -d "$dir" ]; do
-        size=$(du -sh "$dir" 2>/dev/null | cut -f1)
-        echo "[$(date '+%H:%M:%S')] deleting $label — $size remaining"
-        sleep 5
-    done
-    echo "[$(date '+%H:%M:%S')] done: $label"
-}
-
 echo "=== Cleanup started at $(date) ==="
 
 # Delete any orphaned _old_* directories left by previously killed cull jobs
 echo "[$(date '+%H:%M:%S')] Scanning for orphaned _old_* directories..."
 while IFS= read -r orphan; do
-    label=$(basename "$orphan")
     echo "[$(date '+%H:%M:%S')] Removing orphan: $orphan"
-    monitor_progress "$orphan" "$label" &
     (
-        find "$orphan" -mindepth 1 -maxdepth 1 -type d | xargs -P 12 -r rm -rf
-        rm -rf "$orphan"
+        find "$orphan" -mindepth 1 -maxdepth 1 | xargs -P 12 -r rm -v
+        rm -v "$orphan"
     ) &
 done < <(find "$PROJECT_DIR" -maxdepth 4 -type d -name '*_old_*' 2>/dev/null)
 wait
@@ -65,10 +51,9 @@ for dir in "${targets[@]}"; do
         mv "$dir" "$old"
         mkdir -p "$dir"
 
-        monitor_progress "$old" "$label" &
         (
-            find "$old" -mindepth 1 -maxdepth 1 -type d | xargs -P 12 -r rm -rf
-            rm -rf "$old"
+            find "$old" -mindepth 1 -maxdepth 1 | xargs -P 12 -r rm -v
+            rm -v "$old"
         ) &
     else
         echo "[$(date '+%H:%M:%S')] Skipping (not found): $dir"
