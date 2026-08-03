@@ -5,12 +5,7 @@
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
 
 PROJECT_DIR="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
-EMPTY_DIR="/tmp/empty_dir_$$"
 
-# Create a temporary empty directory
-mkdir -p "$EMPTY_DIR"
-
-# List of directories to clean
 targets=(
     "$PROJECT_DIR/err"
     "$PROJECT_DIR/out"
@@ -26,17 +21,24 @@ targets=(
     "$PROJECT_DIR/solution_explorer/logs"
 )
 
-echo "Starting cleanup in $PROJECT_DIR..."
+echo "Starting cleanup..."
 
 for dir in "${targets[@]}"; do
     if [ -d "$dir" ]; then
         echo "Clearing: $dir"
-        rsync -a --delete "$EMPTY_DIR/" "$dir/"
+        # Rename immediately so the directory appears empty at once
+        mv "$dir" "${dir}_old_$$"
+        mkdir -p "$dir"
+        # Delete old contents using parallel workers on subdirs, fall back to find
+        if find "${dir}_old_$$" -mindepth 1 -maxdepth 1 -type d | grep -q .; then
+            find "${dir}_old_$$" -mindepth 1 -maxdepth 1 -type d \
+                | xargs -P 12 rm -rf
+        fi
+        rm -rf "${dir}_old_$$" &
     else
         echo "Skipping (not found): $dir"
     fi
 done
 
-# Cleanup
-rmdir "$EMPTY_DIR"
+wait
 echo "Cleanup complete."
