@@ -47,9 +47,11 @@ echo "[$(date '+%H:%M:%S')] Scanning for orphaned _old_* directories..."
 while IFS= read -r orphan; do
     label=$(basename "$orphan")
     echo "[$(date '+%H:%M:%S')] Removing orphan: $orphan"
-    find "$orphan" -mindepth 1 -maxdepth 1 -type d | xargs -P 12 -r rm -rf
-    rm -rf "$orphan" &
     monitor_progress "$orphan" "$label" &
+    (
+        find "$orphan" -mindepth 1 -maxdepth 1 -type d | xargs -P 12 -r rm -rf
+        rm -rf "$orphan"
+    ) &
 done < <(find "$PROJECT_DIR" -maxdepth 4 -type d -name '*_old_*' 2>/dev/null)
 wait
 echo "[$(date '+%H:%M:%S')] Orphan sweep complete."
@@ -63,16 +65,11 @@ for dir in "${targets[@]}"; do
         mv "$dir" "$old"
         mkdir -p "$dir"
 
-        # Parallel deletion: delete each top-level subdir concurrently,
-        # then remove any remaining flat files + the old root
-        if find "$old" -mindepth 1 -maxdepth 1 -type d | grep -q .; then
-            find "$old" -mindepth 1 -maxdepth 1 -type d \
-                | xargs -P 12 rm -rf
-        fi
-        rm -rf "$old" &
-
-        # Monitor runs in background alongside the deletion
         monitor_progress "$old" "$label" &
+        (
+            find "$old" -mindepth 1 -maxdepth 1 -type d | xargs -P 12 -r rm -rf
+            rm -rf "$old"
+        ) &
     else
         echo "[$(date '+%H:%M:%S')] Skipping (not found): $dir"
     fi
