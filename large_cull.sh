@@ -5,8 +5,16 @@
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
 
 PROJECT_DIR="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
+OUTPUT_DIR="$PROJECT_DIR/cull_output"
+OUTPUT_FILE="$OUTPUT_DIR/cull.txt"
+
+mkdir -p "$OUTPUT_DIR"
+
+# Mirror all output to cull_output/cull.txt as well as the slurm out file
+exec > >(tee -a "$OUTPUT_FILE") 2>&1
 
 targets=(
+    "$PROJECT_DIR/log/frameData_old_1805997"
     "$PROJECT_DIR/err"
     "$PROJECT_DIR/out"
     "$PROJECT_DIR/log/engines"
@@ -21,24 +29,43 @@ targets=(
     "$PROJECT_DIR/solution_explorer/logs"
 )
 
-echo "Starting cleanup..."
+# Prints a heartbeat every 5 seconds until the directory disappears
+monitor_progress() {
+    local dir="$1"
+    local label="$2"
+    while [ -d "$dir" ]; do
+        size=$(du -sh "$dir" 2>/dev/null | cut -f1)
+        echo "[$(date '+%H:%M:%S')] deleting $label — $size remaining"
+        sleep 5
+    done
+    echo "[$(date '+%H:%M:%S')] done: $label"
+}
+
+echo "=== Cleanup started at $(date) ==="
 
 for dir in "${targets[@]}"; do
     if [ -d "$dir" ]; then
-        echo "Clearing: $dir"
-        # Rename immediately so the directory appears empty at once
-        mv "$dir" "${dir}_old_$$"
+        label=$(basename "$dir")
+        old="${dir}_old_$$"
+
+        echo "[$(date '+%H:%M:%S')] Clearing: $dir"
+        mv "$dir" "$old"
         mkdir -p "$dir"
-        # Delete old contents using parallel workers on subdirs, fall back to find
-        if find "${dir}_old_$$" -mindepth 1 -maxdepth 1 -type d | grep -q .; then
-            find "${dir}_old_$$" -mindepth 1 -maxdepth 1 -type d \
+
+        # Parallel deletion: delete each top-level subdir concurrently,
+        # then remove any remaining flat files + the old root
+        if find "$old" -mindepth 1 -maxdepth 1 -type d | grep -q .; then
+            find "$old" -mindepth 1 -maxdepth 1 -type d \
                 | xargs -P 12 rm -rf
         fi
-        rm -rf "${dir}_old_$$" &
+        rm -rf "$old" &
+
+        # Monitor runs in background alongside the deletion
+        monitor_progress "$old" "$label" &
     else
-        echo "Skipping (not found): $dir"
+        echo "[$(date '+%H:%M:%S')] Skipping (not found): $dir"
     fi
 done
 
 wait
-echo "Cleanup complete."
+echo "=== Cleanup complete at $(date) ==="
