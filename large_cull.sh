@@ -38,7 +38,7 @@ while IFS= read -r orphan; do
         find "$orphan" -mindepth 1 -maxdepth 1 | xargs -P 12 -r rm -v
         rm -v "$orphan"
     ) &
-done < <(find "$PROJECT_DIR" -maxdepth 4 -type d -name '*_old_*' 2>/dev/null)
+done < <(find "$PROJECT_DIR" "$PROJECT_DIR/log" -maxdepth 1 -type d -name '*_old_*' 2>/dev/null)
 wait
 echo "[$(date '+%H:%M:%S')] Orphan sweep complete."
 
