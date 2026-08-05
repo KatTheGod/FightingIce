@@ -30,18 +30,6 @@ targets=(
 
 echo "=== Cleanup started at $(date) ==="
 
-# Delete any orphaned _old_* directories left by previously killed cull jobs
-echo "[$(date '+%H:%M:%S')] Scanning for orphaned _old_* directories..."
-while IFS= read -r orphan; do
-    echo "[$(date '+%H:%M:%S')] Removing orphan: $orphan"
-    (
-        find "$orphan" -mindepth 1 -maxdepth 1 | xargs -P 12 -r rm -v
-        rm -v "$orphan"
-    ) &
-done < <(find "$PROJECT_DIR" "$PROJECT_DIR/log" -maxdepth 1 -type d -name '*_old_*' 2>/dev/null)
-wait
-echo "[$(date '+%H:%M:%S')] Orphan sweep complete."
-
 for dir in "${targets[@]}"; do
     if [ -d "$dir" ]; then
         label=$(basename "$dir")
@@ -52,8 +40,8 @@ for dir in "${targets[@]}"; do
         mkdir -p "$dir"
 
         (
-            find "$old" -mindepth 1 -maxdepth 1 | xargs -P 12 -r rm -v
-            rm -v "$old"
+            find "$old" -mindepth 1 -maxdepth 1 | xargs -P 12 -r rm -rf
+            rm -rf "$old"
         ) &
     else
         echo "[$(date '+%H:%M:%S')] Skipping (not found): $dir"
