@@ -96,9 +96,9 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
 
     objectives_array: np.ndarray = np.array(
         [
-            *([excitement] if c.Objectives.excitement in settings.objective_set else []),
-            *([competitive_balance] if c.Objectives.competitive_balance in settings.objective_set else []),
-            *([uniqueness_reward] if c.Objectives.uniqueness in settings.objective_set else []),
+            *([-excitement] if c.Objectives.excitement in settings.objective_set else []),
+            *([-competitive_balance] if c.Objectives.competitive_balance in settings.objective_set else []),
+            *([-uniqueness_reward] if c.Objectives.uniqueness in settings.objective_set else []),
         ],
         dtype=np.float64,
     )
