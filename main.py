@@ -49,8 +49,8 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    meta_subspace = meta_space.HIT_BOXES
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_hit_boxes")
+    meta_subspace = meta_space.ENERGY
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_hit_energy")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -75,11 +75,11 @@ if __name__ == "__main__":
                 experiment_name=experiment_name,
                 dask_client=client,
                 # bigbatch -> 32
-                # engine_multiplier=5,
-                # no_matches=6,
-                # stampede -> 30
                 engine_multiplier=5,
                 no_matches=6,
+                # stampede -> 30
+                # engine_multiplier=5,
+                # no_matches=6,
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
