@@ -16,7 +16,6 @@ from itertools import product
 from pathlib import Path
 
 import constants as c
-from genetic_algorithm.meta_mapper import MapperType
 from motion_classes.motion_editor import MAX_FRAME_NUMBERS
 from motion_classes.motion_headers import MotionHeadersEnum
 from motion_classes.motion_names import (
@@ -56,13 +55,13 @@ class MetaStateSubset:
         header_subset: list[MotionHeadersEnum],
         limits: list[RangeLimit],
         exclude_list: list[tuple[MotionNamesEnum, MotionHeadersEnum]] | None = None,
-        mapper_types: list[MapperType] | None = None,
+        # mapper_types: list[MapperType] | None = None,
     ) -> None:
         self.index: int = index
         self.name: str = name
         self.description: str = description
         self.limits = limits
-        self.mapper_types = mapper_types
+        # self.mapper_types = mapper_types
 
         self.motion_subset = motion_subset
         self.header_subset = header_subset
