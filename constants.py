@@ -16,7 +16,7 @@ ZIP_FILES: bool = True
 
 NODES: int = 1
 # This PC kinda stinky, we dont have many cores man
-CORES: int = 12
+CORES: int = 6
 EST_RAM_PER_ENGINE_GB: int = 2
 PARTITION: str = "regular"
 SCHEDULER_FILE: str | None = None
