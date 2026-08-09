@@ -10,7 +10,6 @@ from pymoo.core.variable import Integer
 import constants as c
 import functions as f
 import genetic_algorithm.genetic_functions as gf
-from genetic_algorithm import meta_mapper
 from genetic_algorithm.meta_space import (
     MetaStateSubset,
     RangeLimit,
@@ -127,7 +126,7 @@ class FightingIceProblem(Problem):
         self.game_duration_sec = game_duration_sec
         self.client = dask_client
 
-        self.motion_adjustments: list[tuple[str, str]] = meta_mapper.to_meta_subspace(self.meta_space_subset.meta_subspace)
+        self.motion_adjustments: list[tuple[str, str]] = self.meta_space_subset.meta_subspace
         self.motion_coordinates: np.ndarray = gf.get_motion_coordinates(self.motion_adjustments)
         self.numerical_mapped_motion_coordinates = gf.map_numerical_motion_coordinates(self.motion_adjustments)
         # might not be needed

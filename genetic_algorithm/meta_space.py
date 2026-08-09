@@ -245,74 +245,75 @@ CHARACTER_SPEED = MetaStateSubset(
 )
 add_to_collection(CHARACTER_SPEED)
 
-HIT_BOXES = MetaStateSubset(
-    index=2,
-    name="HIT_BOXES",
-    description="""
-        First iteration of adjusting the attack hitboxes
-        We are going to think of a smarter method later.
-        For now, we are just going to be adjusting the reach of an action.
-        Adjust the width and the height.
-        I think in the next iteration, we can look into adjusting the ratio and the scale.
-        Because rn, some attacks could lose the plot and become blocks.
-        Additionally, ONLY ZEN has a long vertical attack: STAND_F_D_DFB, so we are going to limit that one to 400, and the others to 200
-    """,
-    header_subset=[
-        MotionHeadersEnum.HIT_BOX_WIDTH,
-        MotionHeadersEnum.HIT_BOX_HEIGHT,
-    ],
-    mapper_types=[
-        MapperType.ATTACK_HIT_BOX_WIDTH,
-        MapperType.ATTACK_HIT_BOX_HEIGHT,
-    ],
-    motion_subset=ATTACK_ACTIONS_ALL,
-    limits=[
-        # Special ZEN ATTACK
-        RangeLimit(
-            character_exclude_list=[
-                c.CHARACTERS.GARNET,
-                c.CHARACTERS.LUD,
-            ],
-            nullify_character_exclude_list=False,
-            header_subset=[MotionHeadersEnum.HIT_BOX_HEIGHT],
-            motions_names=[MotionNamesEnum.STAND_F_D_DFB],
-            max=400,
-            min=200,
-        ),
-        # Special ZEN ATTACK for everyone else
-        RangeLimit(
-            character_exclude_list=[c.CHARACTERS.ZEN],
-            nullify_character_exclude_list=False,
-            header_subset=[MotionHeadersEnum.HIT_BOX_HEIGHT],
-            motions_names=[MotionNamesEnum.STAND_F_D_DFB],
-            max=c.MAX_HIT_BOX_HEIGHT,
-            min=10,
-        ),
-        # WIDTH
-        RangeLimit(
-            header_subset=[MotionHeadersEnum.HIT_BOX_WIDTH],
-            motions_names=[
-                motion_name  #
-                for motion_name in ATTACK_ACTIONS_ALL
-                if motion_name != MotionNamesEnum.STAND_F_D_DFB
-            ],
-            max=c.MAX_HIT_BOX_WIDTH,
-            min=10,
-        ),
-        # HEIGHT
-        RangeLimit(
-            header_subset=[MotionHeadersEnum.HIT_BOX_HEIGHT],
-            motions_names=[
-                motion_name  #
-                for motion_name in ATTACK_ACTIONS_ALL
-                if motion_name != MotionNamesEnum.STAND_F_D_DFB
-            ],
-            max=c.MAX_HIT_BOX_HEIGHT,
-            min=10,
-        ),
-    ],
-)
-add_to_collection(HIT_BOXES)
+# We are omitting this for noe, need to think more about it
+# HIT_BOXES = MetaStateSubset(
+#     index=2,
+#     name="HIT_BOXES",
+#     description="""
+#         First iteration of adjusting the attack hitboxes
+#         We are going to think of a smarter method later.
+#         For now, we are just going to be adjusting the reach of an action.
+#         Adjust the width and the height.
+#         I think in the next iteration, we can look into adjusting the ratio and the scale.
+#         Because rn, some attacks could lose the plot and become blocks.
+#         Additionally, ONLY ZEN has a long vertical attack: STAND_F_D_DFB, so we are going to limit that one to 400, and the others to 200
+#     """,
+#     header_subset=[
+#         MotionHeadersEnum.HIT_BOX_WIDTH,
+#         MotionHeadersEnum.HIT_BOX_HEIGHT,
+#     ],
+#     mapper_types=[
+#         MapperType.ATTACK_HIT_BOX_WIDTH,
+#         MapperType.ATTACK_HIT_BOX_HEIGHT,
+#     ],
+#     motion_subset=ATTACK_ACTIONS_ALL,
+#     limits=[
+#         # Special ZEN ATTACK
+#         RangeLimit(
+#             character_exclude_list=[
+#                 c.CHARACTERS.GARNET,
+#                 c.CHARACTERS.LUD,
+#             ],
+#             nullify_character_exclude_list=False,
+#             header_subset=[MotionHeadersEnum.HIT_BOX_HEIGHT],
+#             motions_names=[MotionNamesEnum.STAND_F_D_DFB],
+#             max=400,
+#             min=200,
+#         ),
+#         # Special ZEN ATTACK for everyone else
+#         RangeLimit(
+#             character_exclude_list=[c.CHARACTERS.ZEN],
+#             nullify_character_exclude_list=False,
+#             header_subset=[MotionHeadersEnum.HIT_BOX_HEIGHT],
+#             motions_names=[MotionNamesEnum.STAND_F_D_DFB],
+#             max=c.MAX_HIT_BOX_HEIGHT,
+#             min=10,
+#         ),
+#         # WIDTH
+#         RangeLimit(
+#             header_subset=[MotionHeadersEnum.HIT_BOX_WIDTH],
+#             motions_names=[
+#                 motion_name  #
+#                 for motion_name in ATTACK_ACTIONS_ALL
+#                 if motion_name != MotionNamesEnum.STAND_F_D_DFB
+#             ],
+#             max=c.MAX_HIT_BOX_WIDTH,
+#             min=10,
+#         ),
+#         # HEIGHT
+#         RangeLimit(
+#             header_subset=[MotionHeadersEnum.HIT_BOX_HEIGHT],
+#             motions_names=[
+#                 motion_name  #
+#                 for motion_name in ATTACK_ACTIONS_ALL
+#                 if motion_name != MotionNamesEnum.STAND_F_D_DFB
+#             ],
+#             max=c.MAX_HIT_BOX_HEIGHT,
+#             min=10,
+#         ),
+#     ],
+# )
+# add_to_collection(HIT_BOXES)
 
 ENERGY = MetaStateSubset(
     index=3,

@@ -22,5 +22,6 @@ evaluate_individual(
         engine_multiplier=1,
         game_duration_sec=const.GAME_DURATION_SEC,
         visual=False,
+        objective_set=const.OBJECTIVE_SET,
     ),
 )
