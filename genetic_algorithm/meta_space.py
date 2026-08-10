@@ -618,6 +618,27 @@ ATTACK_UP_TIME = MetaStateSubset(
 )
 add_to_collection(ATTACK_UP_TIME)
 
+STUNNING_MOTIONS_KNOCK_DOWN = [
+    MotionNamesEnum.AIR_UA,
+    MotionNamesEnum.AIR_UB,
+    MotionNamesEnum.AIR_D_DF_FB,
+]
+
+STUNNING_MOTIONS_KNOCK_UP = [
+    MotionNamesEnum.STAND_B,
+    MotionNamesEnum.AIR_A,
+    MotionNamesEnum.AIR_B,
+    MotionNamesEnum.AIR_DB,
+    MotionNamesEnum.STAND_D_DF_FA,
+    MotionNamesEnum.STAND_D_DF_FB,
+    MotionNamesEnum.STAND_F_D_DFA,
+    MotionNamesEnum.STAND_F_D_DFB,
+    MotionNamesEnum.STAND_D_DB_BA,
+    MotionNamesEnum.STAND_D_DB_BB,
+    MotionNamesEnum.AIR_D_DB_BA,
+    MotionNamesEnum.AIR_D_DB_BB,
+    MotionNamesEnum.STAND_D_DF_FC,
+]
 STUNNING = MetaStateSubset(
     index=7,
     name="STUNNING",
@@ -637,6 +658,12 @@ STUNNING = MetaStateSubset(
         (MotionNamesEnum.THROW_B, MotionHeadersEnum.ATTACK_IMPACT_X),
         (MotionNamesEnum.THROW_A, MotionHeadersEnum.ATTACK_GIVE_GUARD_RECOV),
         (MotionNamesEnum.THROW_B, MotionHeadersEnum.ATTACK_GIVE_GUARD_RECOV),
+        *list(
+            product(
+                list(set(ATTACK_ACTIONS_ALL) - {*STUNNING_MOTIONS_KNOCK_DOWN, *STUNNING_MOTIONS_KNOCK_UP}),
+                [MotionHeadersEnum.ATTACK_IMPACT_Y],
+            )
+        ),
     ],
     limits=[
         # By default, the throws don"t have an impact x. Weird
@@ -649,32 +676,14 @@ STUNNING = MetaStateSubset(
         # Knock DOWN
         RangeLimit(
             header_subset=[MotionHeadersEnum.ATTACK_IMPACT_Y],
-            motions_names=[
-                MotionNamesEnum.AIR_UA,
-                MotionNamesEnum.AIR_UB,
-                MotionNamesEnum.AIR_D_DF_FB,
-            ],
+            motions_names=STUNNING_MOTIONS_KNOCK_DOWN,
             min=1,
             max=20,
         ),
         # Knock up
         RangeLimit(
             header_subset=[MotionHeadersEnum.ATTACK_IMPACT_Y],
-            motions_names=[
-                MotionNamesEnum.STAND_B,
-                MotionNamesEnum.AIR_A,
-                MotionNamesEnum.AIR_B,
-                MotionNamesEnum.AIR_DB,
-                MotionNamesEnum.STAND_D_DF_FA,
-                MotionNamesEnum.STAND_D_DF_FB,
-                MotionNamesEnum.STAND_F_D_DFA,
-                MotionNamesEnum.STAND_F_D_DFB,
-                MotionNamesEnum.STAND_D_DB_BA,
-                MotionNamesEnum.STAND_D_DB_BB,
-                MotionNamesEnum.AIR_D_DB_BA,
-                MotionNamesEnum.AIR_D_DB_BB,
-                MotionNamesEnum.STAND_D_DF_FC,
-            ],
+            motions_names=STUNNING_MOTIONS_KNOCK_UP,
             min=-30,
             max=-5,
         ),
