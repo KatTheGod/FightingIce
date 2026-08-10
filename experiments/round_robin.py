@@ -139,7 +139,6 @@ def run_matchup(indexed_configuration: tuple[int, list[int, float, int, int, int
         Relying on your code working this way is always a bad idea, and we should have done this long ago
     """
 
-
     return tuple(win_rates)
 
 
@@ -179,15 +178,13 @@ if __name__ == "__main__":
 
     configurations: list[int, float, int, int, int, int, bool] = list(
         product(
-            *[
-                AgentConfigRanges.max_depth,
-                AgentConfigRanges.ucb_constant,
-                AgentConfigRanges.rollout_duration,
-                AgentConfigRanges.child_creation_simulation_limit,
-                AgentConfigRanges.max_tree_depth,
-                AgentConfigRanges.min_visit_count_before_rollout,
-                AgentConfigRanges.used_reversed_action_list,
-            ],
+            AgentConfigRanges.max_depth,
+            AgentConfigRanges.ucb_constant,
+            AgentConfigRanges.rollout_duration,
+            AgentConfigRanges.child_creation_simulation_limit,
+            AgentConfigRanges.max_tree_depth,
+            AgentConfigRanges.min_visit_count_before_rollout,
+            AgentConfigRanges.used_reversed_action_list,
         ),
     )
 

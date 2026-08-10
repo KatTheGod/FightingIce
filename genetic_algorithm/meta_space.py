@@ -332,6 +332,16 @@ ENERGY = MetaStateSubset(
         *ATTACK_ACTIONS_ALL,
         *MOVEMENT_ACTIONS,
     ],
+    exclude_list=list(
+        product(
+            MOVEMENT_ACTIONS,
+            [
+                MotionHeadersEnum.ATTACK_HIT_ADD_ENERGY,
+                MotionHeadersEnum.ATTACK_GUARD_ADD_ENERGY,
+                MotionHeadersEnum.ATTACK_GIVE_ENERGY,
+            ],
+        )
+    ),
     limits=[
         # Start Add Energy
         RangeLimit(

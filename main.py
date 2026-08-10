@@ -49,8 +49,8 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    meta_subspace = meta_space.PROJECTILE
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_projectiles")
+    meta_subspace = meta_space.ENERGY
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_energy")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -67,7 +67,6 @@ if __name__ == "__main__":
         )
 
         start_time = time.perf_counter()
-        # 30 Games
         if previous_result is None:
             print("New experiment")
             current_gen_count: int = 0
@@ -75,11 +74,14 @@ if __name__ == "__main__":
                 experiment_name=experiment_name,
                 dask_client=client,
                 # bigbatch -> 32
-                engine_multiplier=5,
-                no_matches=6,
-                # stampede -> 30
                 # engine_multiplier=5,
                 # no_matches=6,
+                # stampede -> 30
+                engine_multiplier=5,
+                no_matches=6,
+                # local run
+                # engine_multiplier=1,
+                # no_matches=1,
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
@@ -114,13 +116,15 @@ if __name__ == "__main__":
                         c.pymoo.MOEAD.SpreadType.DAS_DENNIS,
                         # n_partitions=10 == 66
                         n_partitions=7, # == 36
+                        # n_partitions=2, # == 36
                         n_dim=len(c.OBJECTIVE_SET),
                         # n_partitions=29,
                     ),
                     # Magic number is 20
                     # n_neighbors=7,
                     # n_neighbors=15, Used for 66 individuals
-                    n_neighbors=8,
+                    n_neighbors=8, # Used for 30-32 individuals
+                    # n_neighbors=1,
                     decomposition=PBI(theta=10),
                     sampling=IntegerRandomSampling(),
                     crossover=SBX(prob=1.0, eta=20, vtype=int),
