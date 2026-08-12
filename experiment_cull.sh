@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -p batch
+#SBATCH -p stampede
 #SBATCH -J cull_rgx
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
