@@ -49,8 +49,8 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    meta_subspace = meta_space.DAMAGE
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_damage")
+    meta_subspace = meta_space.PROJECTILE
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_projectiles")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -74,8 +74,8 @@ if __name__ == "__main__":
                 experiment_name=experiment_name,
                 dask_client=client,
                 # bigbatch -> 32
-                engine_multiplier=5,
-                no_matches=6,
+                engine_multiplier=4,
+                no_matches=8,
                 # stampede -> 30
                 # engine_multiplier=5,
                 # no_matches=6,
@@ -89,10 +89,32 @@ if __name__ == "__main__":
             )
 
             """
+                Stampede
+
                 Time Estimation:
-                    36 * 10 -> 460 Simulations
+                    36 * 10 -> 360 Simulations
                     5 * 6 -> 30 Games per simulation
                     30 * 360 -> 10800 Games
+
+                Cluster Capabilities:
+                    Nodes == 5
+                    Cores == 16
+
+                    -> each node handles 1 individual
+                    10800 / 5 -> 2160 Games in sequence
+
+                Time Estimations
+                    Minutes:
+                        1.0: 36 hours
+                        1.5: 54 hours
+                        2.0:  72 hours (Hanging on limit)
+
+                BigBatch
+
+                Time Estimation:
+                    36 * 10 -> 360 Simulations
+                    4 * 8 -> 32 Games per simulation
+                    32 * 360 -> 10800 Games
 
                 Cluster Capabilities:
                     Nodes == 5
