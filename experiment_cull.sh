@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH -p stampede
-#SBATCH -J cull_rgx
+#SBATCH -J cull_aut
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
 
 # Regex applied to the full file path. Only matching files are deleted.
 # Example: "ZEN.*\.json$" deletes all ZEN character json files
-experiment_regex="3_ex_cb_uq_mse_energy.*"
+experiment_regex="6_ex_cb_uq_mse_attack_up_time.*"
 PROJECT_DIR="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 
 targets=(
