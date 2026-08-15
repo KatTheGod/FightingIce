@@ -6,7 +6,7 @@
 
 # Regex applied to the full file path. Only matching files are deleted.
 # Example: "ZEN.*\.json$" deletes all ZEN character json files
-experiment_regex="6_ex_cb_uq_mse_attack_up_time.*"
+experiment_regex="6_ex_cb_uq_mse_damage.*"
 PROJECT_DIR="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 
 targets=(
