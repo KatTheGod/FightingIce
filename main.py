@@ -49,8 +49,8 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    meta_subspace = meta_space.ATTACK_UP_TIME
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_attack_up_time")
+    meta_subspace = meta_space.PROJECTILE
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_projectiles")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -114,20 +114,20 @@ if __name__ == "__main__":
                 Time Estimation:
                     36 * 10 -> 360 Simulations
                     4 * 8 -> 32 Games per simulation
-                    32 * 360 -> 10800 Games
+                    32 * 360 -> 11520 Games
 
                 Cluster Capabilities:
-                    Nodes == 5
-                    Cores == 16
+                    Nodes == 6
+                    Cores == 14
 
                     -> each node handles 1 individual
-                    10800 / 5 -> 2160 Games in sequence
+                    11520 / 6 -> 1920 Games in sequence
 
                 Time Estimations
                     Minutes:
-                        1.0: 36 hours
-                        1.5: 54 hours
-                        2.0:  72 hours (Hanging on limit)
+                        1.0: 32 hours
+                        1.5: 42.66* hours
+                        2.0:  64 hours (further out though)
             """
             res = minimize(
                 problem=problem,
