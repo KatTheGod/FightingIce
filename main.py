@@ -74,11 +74,11 @@ if __name__ == "__main__":
                 experiment_name=experiment_name,
                 dask_client=client,
                 # bigbatch -> 32
-                engine_multiplier=4,
-                no_matches=8,
+                # engine_multiplier=4,
+                # no_matches=8,
                 # stampede -> 30
-                # engine_multiplier=5,
-                # no_matches=6,
+                engine_multiplier=5,
+                no_matches=6,
                 # local run
                 # engine_multiplier=1,
                 # no_matches=1,
@@ -112,6 +112,8 @@ if __name__ == "__main__":
                 BigBatch
 
                 Time Estimation:
+                    # Incorrect, because we have one taking longer than that...
+                    Weird!
                     36 * 10 -> 360 Simulations
                     4 * 8 -> 32 Games per simulation
                     32 * 360 -> 11520 Games
