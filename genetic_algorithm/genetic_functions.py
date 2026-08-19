@@ -116,9 +116,9 @@ async def wait_for_file(
     timeout: int = 10,
 ) -> pathlib.Path | None:
     if c.BASE_PATH is not None:
-        file_path: pathlib.Path = pathlib.Path(os.path.join(c.BASE_PATH, "log", log_group))
+        file_path: pathlib.Path = pathlib.Path(c.BASE_PATH) / "log" / log_group
     else:
-        file_path: pathlib.Path = pathlib.Path(os.path.join("log", log_group))
+        file_path: pathlib.Path = pathlib.Path("log") / log_group
 
     start_poll = time.time()
     time_str = datetime.now().strftime("%H:%M:%S")
@@ -167,17 +167,22 @@ async def orchestrate_matches(
     c.POLL_INTERVAL_SEC = 0
     c.GAME_DURATION_SEC = game_duration_sec
 
+    project_root = pathlib.Path(c.BASE_PATH) if c.BASE_PATH else pathlib.Path.cwd()
+
+    tmp_dir = pathlib.Path(f"/tmp/{experiment_name}")
+    (tmp_dir / "log" / "engines").mkdir(parents=True, exist_ok=True)
+
     custom_motion_paths: list[str] = [
-        os.path.join(
-            c.Directories.CUSTOM_MOTIONS,
-            experiment_name,
-            f"{character_name.lower()}.csv",
-        )  #
-        for character_name in c.CHARACTER_ORDER
+        str(pathlib.Path(c.Directories.CUSTOM_MOTIONS) / experiment_name / f"{character_name.lower()}.csv") for character_name in c.CHARACTER_ORDER
     ]
 
     argument_for_custom_motions = None
     character_order_combinations: list[tuple[int, int]] = list(combinations([0, 1, 2], 2))
+    # character_order_combinations: list[tuple[int, int]] = [
+    #     (0, 2),
+    #     (0, 2),
+    #     (0, 2),
+    # ]
 
     if save_mutated_motions:
         for path, mutated_motion in zip(custom_motion_paths, mutated_motions, strict=True):
@@ -186,28 +191,26 @@ async def orchestrate_matches(
                 path=path,
             )
 
+        # Java needs absolute paths since its cwd is /tmp/{experiment_name}
+        absolute_custom_motion_paths: list[str] = [str(project_root / p) for p in custom_motion_paths]
+
         argument_for_custom_motions: np.ndarray = np.full(shape=(3, 6), dtype=object, fill_value="")
-        # character_order_combinations: list[tuple[int, int]] = [
-        #     (0, 2),
-        #     (0, 2),
-        #     (0, 2),
-        # ]
         for index, combination in enumerate(character_order_combinations):
             argument_for_custom_motions[index, :] = np.array(
                 [
                     "--config-path",
                     "2",
                     c.CHARACTER_ORDER_REVERSE[combination[0]],
-                    custom_motion_paths[combination[0]],
+                    absolute_custom_motion_paths[combination[0]],
                     c.CHARACTER_ORDER_REVERSE[combination[1]],
-                    custom_motion_paths[combination[1]],
+                    absolute_custom_motion_paths[combination[1]],
                 ],
             )
 
     common_commands = [
         "java",
         "-cp",
-        os.pathsep.join(["dare.jar", "."]),
+        os.pathsep.join([str(project_root / "dare.jar"), str(project_root)]),
         "Main",
         "--limithp",
         str(c.PLAYER_HP),
@@ -223,8 +226,6 @@ async def orchestrate_matches(
         *(["--lightweight-mode"] if not visual else []),
         "--pyftg-mode",
     ]
-
-    os.makedirs(os.path.join("log", "engines"), exist_ok=True)
 
     characters = [
         character_name  #
@@ -250,7 +251,10 @@ async def orchestrate_matches(
         extra_commands=argument_for_custom_motions,
         environment=environment,
         environment_name=environment_name,
+        tmp_dir=tmp_dir,
     )
+
+    f.transfer_tmp_to_nfs(tmp_dir)
 
     f.consolidate_data(
         experiment_name,
@@ -366,12 +370,10 @@ def calculate_win_probabilities(
     frame_window: int = 60,
     projected_hp_weight: float = 0.5,
 ) -> list[np.ndarray]:
-    full_file_path: pathlib.Path = pathlib.Path(
-        os.path.join(
-            "log",
-            c.LOGS.FRAME_DATA,
-            data_frame_file_name,
-        ),
+    full_file_path: pathlib.Path = (
+        pathlib.Path("log")  #
+        / c.LOGS.FRAME_DATA
+        / data_frame_file_name
     )
 
     if not full_file_path.exists():

@@ -506,6 +506,7 @@ async def orchestrate_matches(
     agent_names: np.ndarray,
     experiment_name: str,
     deterministic: bool = False,
+    tmp_dir: Path | None = None,
 ) -> None:
     matches: list[asyncio.Task] = []
 
@@ -526,7 +527,7 @@ async def orchestrate_matches(
         )
 
     for index in range(no_engines):
-        port: int | None = f.get_port_number_from_engine_logs(experiment_name, simulators[index].pid)
+        port: int | None = f.get_port_number_from_engine_logs(experiment_name, simulators[index].pid, log_dir=tmp_dir)
         print(f"PID: {simulators[index].pid}, PORT: {port}")
 
         if port is None:
@@ -620,6 +621,7 @@ async def start_simulators(
     extra_commands: list[str] | np.ndarray | None = None,
     environment: str | None = None,
     environment_name: str | None = None,
+    tmp_dir: Path | None = None,
 ) -> None:
     if "-" in experiment_name:
         raise ValueError("Please avoid using experiment names with -, it will mess up the data consolidator")
@@ -655,16 +657,16 @@ async def start_simulators(
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             env=process_env,
+            cwd=str(tmp_dir) if tmp_dir is not None else None,
         )
         simulators.append(proc)
 
-        log_files.append(
-            await aiofiles.open(
-                # f'log/engines/{experiment_name}-instance-{gateway.port}-{c.GAME_TIME}.log',
-                f"log/engines/{experiment_name}-pid-{proc.pid}-{c.GAME_TIME}.log",
-                "w",
-            ),
-        )
+        if tmp_dir is not None:
+            log_path = tmp_dir / "log" / "engines" / f"{experiment_name}-pid-{proc.pid}-{c.GAME_TIME}.log"
+        else:
+            log_path = Path(f"log/engines/{experiment_name}-pid-{proc.pid}-{c.GAME_TIME}.log")
+
+        log_files.append(await aiofiles.open(str(log_path), "w"))
 
         task_containers.append(
             asyncio.create_task(
@@ -690,7 +692,37 @@ async def start_simulators(
         agent_names,
         experiment_name,
         deterministic=deterministic,
+        tmp_dir=tmp_dir,
     )
+
+
+def transfer_tmp_to_nfs(tmp_dir: Path) -> None:
+    """
+    Tars the entire /tmp/{experiment_name}/ directory, moves the single archive
+    to NFS as one write, extracts it so files land under log/, then cleans up.
+    """
+    experiment_name = tmp_dir.name
+    tar_path = Path("/tmp") / f"{experiment_name}.tar.gz"
+    project_root = Path(c.BASE_PATH) if c.BASE_PATH else Path.cwd()
+
+    subprocess.run(
+        ["tar", "-czf", str(tar_path), "-C", "/tmp", experiment_name],
+        check=True,
+    )
+
+    log_dir = project_root / "log"
+    log_dir.mkdir(exist_ok=True, parents=True)
+    nfs_tar_path = log_dir / f"{experiment_name}.tar.gz"
+    shutil.move(str(tar_path), str(nfs_tar_path))
+
+    # --strip-components=1 removes the leading {experiment_name}/ so files land in log/
+    subprocess.run(
+        ["tar", "-xzf", str(nfs_tar_path), "--strip-components=1", "-C", str(project_root)],
+        check=True,
+    )
+
+    nfs_tar_path.unlink(missing_ok=True)
+    shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 # GPT Function, not important to know how to delete files in folder
@@ -773,9 +805,15 @@ def transform_win_rate(win_rate: float, sigma: float = 0.20) -> np.ndarray:
     return math.exp(-(pow(0.5 - win_rate, 2)) / (2 * pow(sigma, 2)))
 
 
-def get_port_number_from_engine_logs(experiment_name: str, pid: int) -> int | None:
+def get_port_number_from_engine_logs(experiment_name: str, pid: int, log_dir: Path | None = None) -> int | None:
     try:
-        engine_logs_path = Path(os.path.join("log", "engines", f"{experiment_name}-pid-{pid}-{c.GAME_TIME}.log"))
+        engine_name: str = f"{experiment_name}-pid-{pid}-{c.GAME_TIME}.log"
+        engine_logs_path = (
+            log_dir / "log" / "engines" / engine_name  #
+            if log_dir is not None
+            else Path("log") / "engines" / engine_name
+        )
+
         with open(engine_logs_path) as file:
             content: str = "".join(list(islice(file, 10)))
             pattern: re.Pattern = re.compile(r"<PORT>:(\d+)")
