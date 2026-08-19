@@ -111,18 +111,14 @@ class MetaStateSubset:
     """
 
     def set_uniqueness_limit(self) -> None:
-        self.uniqueness_limit: float = 0
-        for limit in self.limits:
-            self.uniqueness_limit += pow(
-                (
-                    abs(limit.max - limit.min)  #
-                    * len(limit.header_subset)
-                    * len(limit.motions_names)
-                ),
-                2,
+        self.uniqueness_limit: float = math.sqrt(
+            sum(
+                pow(abs(limit.max - limit.min), 2)
+                * len(limit.header_subset)
+                * len(limit.motions_names)
+                for limit in self.limits
             )
-
-        self.uniqueness_limit: float = math.sqrt(self.uniqueness_limit)
+        )
 
     def derive_experiment_name(self, experiment_name: str, unique: bool = True) -> str:
         experiment_name_number: int = -1
