@@ -93,21 +93,21 @@ if __name__ == "__main__":
 
                 Time Estimation:
                     36 * 10 -> 360 Simulations
-                    5 * 6 -> 30 Games per simulation
-                    30 * 360 -> 10800 Games
+                    6 -> 30 Games per simulation
+                    6 * 360 -> 2160 Games
 
                 Cluster Capabilities:
                     Nodes == 5
                     Cores == 16
 
                     -> each node handles 1 individual
-                    10800 / 5 -> 2160 Games in sequence
+                    2160 / 5 -> 432 Games in sequence
 
                 Time Estimations
                     Minutes:
-                        1.0: 36 hours
-                        1.5: 54 hours
-                        2.0:  72 hours (Hanging on limit)
+                        1.0: 7,2 hours
+                        1.5: 10,8 hours
+                        2.0: 14,4 hours (Hanging on limit)
 
                 BigBatch
 
@@ -115,21 +115,21 @@ if __name__ == "__main__":
                     # Incorrect, because we have one taking longer than that...
                     Weird!
                     36 * 10 -> 360 Simulations
-                    4 * 8 -> 32 Games per simulation
-                    32 * 360 -> 11520 Games
+                    8 -> 32 Games per simulation
+                    8 * 360 -> 2880 Games
 
                 Cluster Capabilities:
                     Nodes == 6
                     Cores == 14
 
                     -> each node handles 1 individual
-                    11520 / 6 -> 1920 Games in sequence
+                    2880 / 6 -> 480 Games in sequence
 
                 Time Estimations
                     Minutes:
-                        1.0: 32 hours
-                        1.5: 42.66* hours
-                        2.0:  64 hours (further out though)
+                        1.0: 8 hours
+                        1.5: 12 hours
+                        2.0: 16 hours (further out though)
             """
             res = minimize(
                 problem=problem,
