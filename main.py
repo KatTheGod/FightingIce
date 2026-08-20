@@ -3,7 +3,7 @@ from pathlib import Path
 
 import dill
 from distributed import Client, LocalCluster
-from pymoo.algorithms.moo.moead import MOEAD
+from pymoo.algorithms.moo.moead import ParallelMOEAD
 from pymoo.core.algorithm import Algorithm
 from pymoo.decomposition.pbi import PBI
 from pymoo.operators.crossover.sbx import SBX
@@ -133,7 +133,7 @@ if __name__ == "__main__":
             """
             res = minimize(
                 problem=problem,
-                algorithm=MOEAD(
+                algorithm=ParallelMOEAD(
                     # N = n_partitions + 1 (for n_obj == 2)
                     # Must be greater than n_neighbors
                     ref_dirs=get_reference_directions(
