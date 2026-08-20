@@ -1,8 +1,12 @@
+# TODO: Replace platform.system() == "Linux" check with tempfile.gettempdir() so the
+# /tmp redirect works on Windows for local testing (gettempdir() returns /tmp on Linux
+# and C:\Users\...\AppData\Local\Temp on Windows — no platform check needed)
 import asyncio
 import json
 import math
 import os
 import pathlib
+import platform
 import time
 from datetime import datetime
 from itertools import combinations
@@ -169,8 +173,11 @@ async def orchestrate_matches(
 
     project_root = pathlib.Path(c.BASE_PATH) if c.BASE_PATH else pathlib.Path.cwd()
 
-    tmp_dir = pathlib.Path(f"/tmp/{experiment_name}")
-    (tmp_dir / "log" / "engines").mkdir(parents=True, exist_ok=True)
+    # On Windows (local testing) /tmp doesn't exist, so fall back to original behaviour
+    tmp_dir: pathlib.Path | None = None
+    if platform.system() == "Linux":
+        tmp_dir = pathlib.Path("/tmp") / experiment_name
+        (tmp_dir / "log" / "engines").mkdir(parents=True, exist_ok=True)
 
     custom_motion_paths: list[str] = [
         str(pathlib.Path(c.Directories.CUSTOM_MOTIONS) / experiment_name / f"{character_name.lower()}.csv") for character_name in c.CHARACTER_ORDER
@@ -254,7 +261,8 @@ async def orchestrate_matches(
         tmp_dir=tmp_dir,
     )
 
-    f.transfer_tmp_to_nfs(tmp_dir)
+    if tmp_dir is not None:
+        f.transfer_tmp_to_nfs(tmp_dir)
 
     f.consolidate_data(
         experiment_name,
