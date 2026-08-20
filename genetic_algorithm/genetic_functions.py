@@ -232,6 +232,7 @@ async def orchestrate_matches(
         *(["--headless-mode"] if not visual else []),
         *(["--lightweight-mode"] if not visual else []),
         "--pyftg-mode",
+        *(["--tmp-log-dir", str(tmp_dir)] if tmp_dir is not None else []),
     ]
 
     characters = [

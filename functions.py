@@ -657,7 +657,6 @@ async def start_simulators(
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             env=process_env,
-            cwd=str(tmp_dir) if tmp_dir is not None else None,
         )
         simulators.append(proc)
 
