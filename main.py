@@ -180,6 +180,7 @@ if __name__ == "__main__":
 
             res = algorithm.result()
 
+        # Will be on NFS because by this point, we are even on the head node
         f.consolidate_data(
             problem.experiment_name,
             exclude_list=[

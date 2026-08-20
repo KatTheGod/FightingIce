@@ -119,7 +119,11 @@ async def wait_for_file(
     extension: str,
     timeout: int = 10,
 ) -> pathlib.Path | None:
-    if c.BASE_PATH is not None:
+    tmp_dir: pathlib.Path | None = None
+    if platform.system() == "Linux":
+        tmp_dir = pathlib.Path("/tmp") / experiment_name
+        file_path: pathlib.Path = tmp_dir / "log" / log_group
+    elif c.BASE_PATH is not None:
         file_path: pathlib.Path = pathlib.Path(c.BASE_PATH) / "log" / log_group
     else:
         file_path: pathlib.Path = pathlib.Path("log") / log_group
@@ -166,18 +170,13 @@ async def orchestrate_matches(
     environment_name: str | None = None,
     force_frame_data_unlink: bool = False,
     save_mutated_motions: bool = True,
+    tmp_dir: pathlib.Path | None = None,
 ) -> float:
     c.NO_GAMES = no_matches
     c.POLL_INTERVAL_SEC = 0
     c.GAME_DURATION_SEC = game_duration_sec
 
     project_root = pathlib.Path(c.BASE_PATH) if c.BASE_PATH else pathlib.Path.cwd()
-
-    # On Windows (local testing) /tmp doesn't exist, so fall back to original behaviour
-    tmp_dir: pathlib.Path | None = None
-    if platform.system() == "Linux":
-        tmp_dir = pathlib.Path("/tmp") / experiment_name
-        (tmp_dir / "log" / "engines").mkdir(parents=True, exist_ok=True)
 
     custom_motion_paths: list[str] = [
         str(pathlib.Path(c.Directories.CUSTOM_MOTIONS) / experiment_name / f"{character_name.lower()}.csv") for character_name in c.CHARACTER_ORDER
@@ -262,9 +261,6 @@ async def orchestrate_matches(
         tmp_dir=tmp_dir,
     )
 
-    if tmp_dir is not None:
-        f.transfer_tmp_to_nfs(tmp_dir)
-
     f.consolidate_data(
         experiment_name,
         log_list=[
@@ -272,6 +268,7 @@ async def orchestrate_matches(
             c.LOGS.FRAME_DATA,
         ],
         force_frame_data_unlink=force_frame_data_unlink,
+        tmp_dir=tmp_dir,
     )
 
     # To get the game results, we are going to get the HP differences in each game.
@@ -374,22 +371,16 @@ def map_numerical_motion_coordinates(motion_adjustments: list[tuple[str, str]]) 
 # TODO, can be vectorized and sped up, but really, not the slow point in your code
 # Calculated at the POV of player 1
 def calculate_win_probabilities(
-    data_frame_file_name: str,
+    data_file: pathlib.Path,
     energy_weight: float = 0.5,
     frame_window: int = 60,
     projected_hp_weight: float = 0.5,
 ) -> list[np.ndarray]:
-    full_file_path: pathlib.Path = (
-        pathlib.Path("log")  #
-        / c.LOGS.FRAME_DATA
-        / data_frame_file_name
-    )
-
-    if not full_file_path.exists():
-        raise FileNotFoundError(f"File: {full_file_path!s} doesn't exist")
+    if not data_file.exists():
+        raise FileNotFoundError(f"File: {data_file!s} doesn't exist")
 
     frame_data_json: list[dict[str, any]]
-    with open(str(full_file_path)) as file:
+    with open(str(data_file)) as file:
         frame_data_json = json.load(file)
 
     row_count: int = -1
@@ -497,13 +488,17 @@ def calculate_entropy_score(
     return pow(entropy_score, gamma_scale)
 
 
-async def calculate_excitement(experiment_name: str, tanh_scale: float = 3, frame_window: int = 300) -> float:
+async def calculate_excitement(
+    experiment_name: str,
+    tanh_scale: float = 3,
+    frame_window: int = 300,
+) -> float:
     frame_data_file: pathlib.Path | None = await wait_for_df_file(experiment_name)
 
     if frame_data_file is None or not frame_data_file.exists():
         raise FileNotFoundError(f"cant find the consolidated point file: *{experiment_name}*.json")
 
-    win_probabilities = calculate_win_probabilities(frame_data_file.name, frame_window=frame_window)
+    win_probabilities = calculate_win_probabilities(frame_data_file, frame_window=frame_window)
     overall_excitement: float = calculate_entropy_score(win_probabilities, frame_window=frame_window, tanh_scale=tanh_scale)
 
     # NOTE: We are not deleting it here because it was a bloody hassle to compress it and use it. Yarre

@@ -1,5 +1,7 @@
 import asyncio
+import platform
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -65,6 +67,12 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
 
     amended_experiment_name: str = f.append_time_uuid_experiment(settings.experiment_name)
 
+    # On Windows (local testing) /tmp doesn't exist, so fall back to original behaviour
+    tmp_dir: Path | None = None
+    if platform.system() == "Linux":
+        tmp_dir = Path("/tmp") / amended_experiment_name
+        (tmp_dir / "log" / "engines").mkdir(parents=True, exist_ok=True)
+
     competitive_balance = asyncio.run(
         gf.orchestrate_matches(
             mutated_motions=mutated_motions,
@@ -80,10 +88,16 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
                 ],
                 reps=3,
             ).reshape(3, -1),
+            tmp_dir=tmp_dir,
         ),
     )
 
-    excitement = asyncio.run(gf.calculate_excitement(amended_experiment_name, frame_window=10))
+    excitement = asyncio.run(
+        gf.calculate_excitement(
+            amended_experiment_name,
+            frame_window=10,
+        )
+    )
 
     f.consolidate_data(
         amended_experiment_name,
@@ -91,7 +105,11 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
             c.LOGS.POINT,
             c.LOGS.FRAME_DATA,
         ],
+        tmp_dir=tmp_dir,
     )
+
+    if tmp_dir is not None:
+        f.transfer_tmp_to_nfs(tmp_dir)
 
     objectives_array: np.ndarray = np.array(
         [

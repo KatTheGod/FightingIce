@@ -222,12 +222,17 @@ def consolidate_data(
     log_list: list[str] | None = None,
     exclude_list: list[str] | None = None,
     force_frame_data_unlink: bool = False,
+    tmp_dir: Path | None = None,
 ) -> None:
     if exclude_list is None:
         exclude_list = []
 
     # We will first throw an error if you add a folder to the logs that we are not aware of
-    directory: Path = Path("log")
+    directory: Path = (
+        Path("log")
+        if tmp_dir is None  #
+        else tmp_dir / "log"
+    )
     directory.mkdir(
         exist_ok=True,
         parents=True,
@@ -294,13 +299,14 @@ def consolidate_data(
 
             if log_group_name == c.LOGS.REPLAY:
                 experiment_folder_name: str = f"{experiment_name}-{c.GAME_TIME}"
-                log_group_path: str = os.path.join("log", log_group_name)
-                experiment_folder_path: str = os.path.join(log_group_path, experiment_folder_name)
-                os.makedirs(experiment_folder_path, exist_ok=True)
+                log_group_path: Path = directory / log_group_name
+                experiment_folder_path: Path = log_group_path / experiment_folder_name
+
+                experiment_folder_path.mkdir(exist_ok=True, parents=True)
                 for experiment_file in experiment_files:
                     experiment_file.rename(
                         os.path.join(
-                            "log",
+                            str(directory),
                             log_group_name,
                             experiment_folder_name,
                             experiment_file.name,

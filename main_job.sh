@@ -18,6 +18,11 @@ export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
 NODES=5
 CORES=16
+
+# Computing nthreads
+ENGINE_MULTIPLIER=5
+THREADS_PER_WORKER=$(( (CORES / (ENGINE_MULTIPLIER * 3)) > 0 ? (CORES / (ENGINE_MULTIPLIER * 3)) : 1 ))
+
 BASE_PATH="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 DASK_FILE="${BASE_PATH}/dask_schedulers/dask_${SLURM_JOB_ID}.json"
 
@@ -38,7 +43,7 @@ srun --quiet \
     --error=dask_logs/worker_logs_$SLURM_JOB_ID/worker_%j_%t.err \
     conda run --no-capture-output -n FI_3_12_13 dask worker \
     --scheduler-file $DASK_FILE \
-    --nthreads $CORES \
+    --nthreads $THREADS_PER_WORKER \
     --resources "cores=$CORES" \
     --no-nanny &
 
