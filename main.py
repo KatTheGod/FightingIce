@@ -148,7 +148,7 @@ if __name__ == "__main__":
                     # n_neighbors=7,
                     # n_neighbors=15, Used for 66 individuals
                     # n_neighbors=8, # Used for 30-32 individuals
-                    n_neighbors=1,
+                    n_neighbors=2,
                     decomposition=PBI(theta=10),
                     sampling=IntegerRandomSampling(),
                     crossover=SBX(prob=1.0, eta=20, vtype=int),
