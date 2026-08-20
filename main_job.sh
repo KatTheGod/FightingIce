@@ -26,6 +26,7 @@ THREADS_PER_WORKER=$(( (CORES / (ENGINE_MULTIPLIER * 3)) > 0 ? (CORES / (ENGINE_
 BASE_PATH="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 DASK_FILE="${BASE_PATH}/dask_schedulers/dask_${SLURM_JOB_ID}.json"
 
+DASK_DISTRIBUTED__SCHEDULER__WORKER_SATURATION=1.0 \
 conda run -n FI_3_12_13 dask scheduler \
         --scheduler-file $DASK_FILE \
         --port 0 \
