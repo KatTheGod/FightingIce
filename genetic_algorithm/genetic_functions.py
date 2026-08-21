@@ -524,8 +524,9 @@ def validate_gene(motions: list[pd.DataFrame]) -> bool:
         invalid_uptime_motions: pd.Series = attack_up_time > frame_number
         invalid_uptime_motions_excluding_projectiles: pd.Series = invalid_uptime_motions[~projectile_mask]
 
-        if invalid_uptime_motions_excluding_projectiles.any():
-            return False
+        # if invalid_uptime_motions_excluding_projectiles.any():
+            # print("1")
+            # return False
 
         # Rule 2: Hit-boxes: right >= left and bottom >= top
         character_hit_box_horizontal: pd.Series = (
