@@ -45,12 +45,12 @@ if __name__ == "__main__":
         client = Client(cluster)
 
     print(f"Dask Dashboard available at: {client.dashboard_link}")
-    c.OBJECTIVE_SET = [
-        c.Objectives.competitive_balance,
-        c.Objectives.uniqueness,
-    ]
-    meta_subspace = meta_space.BASIC_STAND_A_B
-    experiment_name: str = meta_subspace.derive_experiment_name("testing_nfs_fix")
+    # c.OBJECTIVE_SET = [
+    #     c.Objectives.competitive_balance,
+    #     c.Objectives.uniqueness,
+    # ]
+    meta_subspace = meta_space.CONCAT_V1
+    experiment_name: str = meta_subspace.derive_experiment_name("testing_concat_v1")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -61,9 +61,9 @@ if __name__ == "__main__":
         previous_result = f.resume_algorithm(None)
         termination: any = get_termination(
             c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
-            n_max_gen=2,
+            n_max_gen=10,
             ftol=1e-6,
-            period=1,
+            period=6,
         )
 
         start_time = time.perf_counter()
@@ -78,7 +78,7 @@ if __name__ == "__main__":
                 # no_matches=8,
                 # stampede -> 30
                 engine_multiplier=5,
-                no_matches=3,
+                no_matches=6,
                 # local run
                 # engine_multiplier=1,
                 # no_matches=1,
@@ -93,7 +93,6 @@ if __name__ == "__main__":
 
                 Time Estimation:
                     36 * 10 -> 360 Simulations
-                    6 -> 30 Games per simulation
                     6 * 360 -> 2160 Games
 
                 Cluster Capabilities:
@@ -112,10 +111,7 @@ if __name__ == "__main__":
                 BigBatch
 
                 Time Estimation:
-                    # Incorrect, because we have one taking longer than that...
-                    Weird!
                     36 * 10 -> 360 Simulations
-                    8 -> 32 Games per simulation
                     8 * 360 -> 2880 Games
 
                 Cluster Capabilities:
@@ -139,16 +135,16 @@ if __name__ == "__main__":
                     ref_dirs=get_reference_directions(
                         c.pymoo.MOEAD.SpreadType.DAS_DENNIS,
                         # n_partitions=10 == 66
-                        # n_partitions=7, # == 36
-                        n_partitions=9, # small local tests
+                        n_partitions=7, # == 36
+                        # n_partitions=3, # small local tests
                         n_dim=len(c.OBJECTIVE_SET),
                         # n_partitions=29,
                     ),
                     # Magic number is 20
                     # n_neighbors=7,
                     # n_neighbors=15, Used for 66 individuals
-                    # n_neighbors=8, # Used for 30-32 individuals
-                    n_neighbors=2,
+                    n_neighbors=8, # Used for 30-32 individuals
+                    # n_neighbors=2,
                     decomposition=PBI(theta=10),
                     sampling=IntegerRandomSampling(),
                     crossover=SBX(prob=1.0, eta=20, vtype=int),

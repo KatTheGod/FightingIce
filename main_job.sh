@@ -2,7 +2,7 @@
 #SBATCH -p stampede
 #SBATCH -c 16
 #SBATCH -N 5
-#SBATCH -J nfs_fix
+#SBATCH -J mse_ct1
 #SBATCH --ntasks-per-node=1
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err

@@ -61,6 +61,7 @@ class MetaStateSubset:
         self.name: str = name
         self.description: str = description
         self.limits = limits
+        self.exclude_list = exclude_list
         # self.mapper_types = mapper_types
 
         self.motion_subset = motion_subset
@@ -82,6 +83,33 @@ class MetaStateSubset:
 
         self.validate_limits()
         self.set_uniqueness_limit()
+
+    @classmethod
+    def from_meta_subspace(
+        cls,
+        index: int,
+        name: str,
+        description: str,
+        meta_subspace: list[tuple[MotionNamesEnum, MotionHeadersEnum]],
+        limits: list[RangeLimit],
+    ) -> "MetaStateSubset":
+        motion_subset = list(dict.fromkeys(m for m, _ in meta_subspace))
+        header_subset = list(dict.fromkeys(h for _, h in meta_subspace))
+
+        full_product = set(product(motion_subset, header_subset))
+        missing = list(full_product - set(meta_subspace))
+        exclude_list = missing or None
+
+        return cls(
+            index=index,
+            name=name,
+            description=description,
+            motion_subset=motion_subset,
+            header_subset=header_subset,
+            limits=limits,
+            exclude_list=exclude_list,
+        )
+
 
     def __eq__(self, other: None) -> bool:
         if not isinstance(other, MetaStateSubset):
@@ -112,12 +140,7 @@ class MetaStateSubset:
 
     def set_uniqueness_limit(self) -> None:
         self.uniqueness_limit: float = math.sqrt(
-            sum(
-                pow(abs(limit.max - limit.min), 2)
-                * len(limit.header_subset)
-                * len(limit.motions_names)
-                for limit in self.limits
-            )
+            sum(pow(abs(limit.max - limit.min), 2) * len(limit.header_subset) * len(limit.motions_names) for limit in self.limits)
         )
 
     def derive_experiment_name(self, experiment_name: str, unique: bool = True) -> str:
@@ -802,3 +825,38 @@ DAMAGE_V2 = MetaStateSubset(
     ],
 )
 add_to_collection(DAMAGE_V2)
+
+CONCAT_V1 = MetaStateSubset.from_meta_subspace(
+    index=10,
+    name="1-en-mass",
+    description="""
+        This is going to be a massive combination of the previous 9 experiments
+        Excluding:
+            attack hit-boxes
+            basic_A_B
+            damage V2
+    """,
+    meta_subspace=list(
+        {
+            *CHARACTER_SPEED.meta_subspace,
+            *ENERGY.meta_subspace,
+            *PROJECTILE.meta_subspace,
+            *COMBO.meta_subspace,
+            *ATTACK_UP_TIME.meta_subspace,
+            *STUNNING.meta_subspace,
+            *DAMAGE.meta_subspace,
+        }
+    ),
+    # For limits, I think its safe to assume we wont get repeating / conflicting ones...
+    # Otherwise, we would even have to rethink that solution
+    limits=[
+        *CHARACTER_SPEED.limits,
+        *ENERGY.limits,
+        *PROJECTILE.limits,
+        *COMBO.limits,
+        *ATTACK_UP_TIME.limits,
+        *STUNNING.limits,
+        *DAMAGE.limits,
+    ],
+)
+add_to_collection(CONCAT_V1)

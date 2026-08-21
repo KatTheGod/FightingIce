@@ -54,7 +54,7 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
 
     # Invalid genes instant fail
     if not gf.validate_gene(mutated_motions):
-        np.zeros(shape=len(settings.objective_set))
+        return np.zeros(shape=len(settings.objective_set))
 
     numerical_differences = np.stack([motion.select_dtypes("number") for motion in mutated_motions])
     uniqueness_reward = gf.constraint_novelty_search(
