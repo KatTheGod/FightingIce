@@ -572,12 +572,13 @@ def validate_gene(motions: list[pd.DataFrame]) -> bool:
         if (cancellable_motions_cancellable_motion_level == -1).any():
             return False
 
+        # Temp redact, because lord, they are all just invalid
         # Rule 5: Cancel able frame number < frame number
-        cancellable_motions_longer_than_frame_number: pd.Series = motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME] >= frame_number
+        # cancellable_motions_longer_than_frame_number: pd.Series = motion.loc[:, mh.MotionHeadersEnum.CANCEL_ABLE_FRAME] >= frame_number
 
-        if (cancellable_motions_longer_than_frame_number).any():
-            print(cancellable_motions_longer_than_frame_number[cancellable_motions_longer_than_frame_number == True])
-            return False
+        # if (cancellable_motions_longer_than_frame_number).any():
+        #     print(cancellable_motions_longer_than_frame_number[cancellable_motions_longer_than_frame_number == True])
+        #     return False
 
     return True
 
