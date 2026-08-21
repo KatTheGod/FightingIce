@@ -73,54 +73,64 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
         tmp_dir = Path("/tmp") / amended_experiment_name
         (tmp_dir / "log" / "engines").mkdir(parents=True, exist_ok=True)
 
-    competitive_balance = asyncio.run(
-        gf.orchestrate_matches(
-            mutated_motions=mutated_motions,
-            no_matches=settings.no_matches,
-            experiment_name=amended_experiment_name,
-            engine_multiplier=settings.engine_multiplier,
-            game_duration_sec=settings.game_duration_sec,
-            visual=settings.visual,
-            agents=np.tile(
-                [
-                    c.AgentNames.KAY_MCTS_MX_AGENT,
-                    c.AgentNames.KAY_MCTS_MX_AGENT,
-                ],
-                reps=3,
-            ).reshape(3, -1),
-            tmp_dir=tmp_dir,
-        ),
-    )
-
-    excitement = asyncio.run(
-        gf.calculate_excitement(
-            amended_experiment_name,
-            frame_window=10,
+    try:
+        competitive_balance = asyncio.run(
+            gf.orchestrate_matches(
+                mutated_motions=mutated_motions,
+                no_matches=settings.no_matches,
+                experiment_name=amended_experiment_name,
+                engine_multiplier=settings.engine_multiplier,
+                game_duration_sec=settings.game_duration_sec,
+                visual=settings.visual,
+                agents=np.tile(
+                    [
+                        c.AgentNames.KAY_MCTS_MX_AGENT,
+                        c.AgentNames.KAY_MCTS_MX_AGENT,
+                    ],
+                    reps=3,
+                ).reshape(3, -1),
+                tmp_dir=tmp_dir,
+            ),
         )
-    )
 
-    f.consolidate_data(
-        amended_experiment_name,
-        exclude_list=[
-            c.LOGS.POINT,
-            c.LOGS.FRAME_DATA,
-        ],
-        tmp_dir=tmp_dir,
-    )
+        excitement = asyncio.run(
+            gf.calculate_excitement(
+                amended_experiment_name,
+                frame_window=10,
+            )
+        )
 
-    if tmp_dir is not None:
-        f.transfer_tmp_to_nfs(tmp_dir)
+        f.consolidate_data(
+            amended_experiment_name,
+            exclude_list=[
+                c.LOGS.POINT,
+                c.LOGS.FRAME_DATA,
+            ],
+            tmp_dir=tmp_dir,
+        )
 
-    objectives_array: np.ndarray = np.array(
-        [
-            *([-excitement] if c.Objectives.excitement in settings.objective_set else []),
-            *([-competitive_balance] if c.Objectives.competitive_balance in settings.objective_set else []),
-            *([-uniqueness_reward] if c.Objectives.uniqueness in settings.objective_set else []),
-        ],
-        dtype=np.float64,
-    )
+        return np.array(
+            [
+                *([-excitement] if c.Objectives.excitement in settings.objective_set else []),
+                *([-competitive_balance] if c.Objectives.competitive_balance in settings.objective_set else []),
+                *([-uniqueness_reward] if c.Objectives.uniqueness in settings.objective_set else []),
+            ],
+            dtype=np.float64,
+        )
 
-    return objectives_array
+    except Exception as e:
+        # Consider not copying this code over hey...
+        f.consolidate_data(
+            amended_experiment_name,
+            exclude_list=[
+                c.LOGS.POINT,
+                c.LOGS.FRAME_DATA,
+            ],
+            tmp_dir=tmp_dir,
+        )
+
+        print(f"[WARN] evaluate_individual failed: {e}. Returning zero fitness.")
+        return np.zeros(shape=len(settings.objective_set))
 
 
 class FightingIceProblem(Problem):

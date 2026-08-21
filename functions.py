@@ -591,7 +591,7 @@ async def orchestrate_matches(
 
     # Kill matches if games take too long to finish
     # We see that it takes about 10 seconds for a game to start up, so we are adding that upfront.
-    duration: float = c.GAME_DURATION_SEC * c.NO_GAMES * 4 + 10
+    duration: float = c.GAME_DURATION_SEC * c.NO_GAMES * 2 + 10
     try:
         await asyncio.wait_for(
             monitor_matches(simulators, matches),

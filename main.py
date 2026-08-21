@@ -1,4 +1,5 @@
 import time
+import platform
 from pathlib import Path
 
 import dill
@@ -17,6 +18,20 @@ import constants as c
 import functions as f
 from genetic_algorithm import meta_space
 from genetic_algorithm.fighting_ice_problem import FightingIceProblem
+
+def _transfer_worker_tmp(experiment_name: str) -> list[str]:
+    from pathlib import Path
+    import functions as f
+
+    transferred = []
+    for d in Path("/tmp").iterdir():
+        if d.is_dir() and experiment_name in d.name:
+            try:
+                f.transfer_tmp_to_nfs(d)
+                transferred.append(str(d))
+            except Exception as e:
+                print(f"[WARN] transfer failed for {d}: {e}")
+    return transferred
 
 if __name__ == "__main__":
     f.set_random_seeds(c.GLOBAL_SEED)
@@ -156,6 +171,17 @@ if __name__ == "__main__":
                 save_history=True,
                 verbose=True,
             )
+
+            # We are going to do one massive move of all the files in tmp
+            if platform.system() == "Linux":
+                file_transfer_starter = time.perf_counter()
+                print("Transferring /tmp data from all workers to NFS...")
+
+                transfer_results = client.run(_transfer_worker_tmp, experiment_name)
+                for worker, dirs in transfer_results.items():
+                    print(f"{worker}: transferred {dirs}")
+
+                print(f"file transfer done, time in seconds: {time.perf_counter() - file_transfer_starter}")
         else:
             # This only works for COMPLETED terminations, can't stop midway
             print("Continuing experiment")
