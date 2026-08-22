@@ -79,8 +79,8 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    meta_subspace = meta_space.ENERGY
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_energy_parallel")
+    meta_subspace = meta_space.ATTACK_UP_TIME
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_attack_up_time_parallel")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
