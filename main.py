@@ -1,5 +1,6 @@
 import platform
 import time
+import zipfile
 from pathlib import Path
 
 import dill
@@ -20,20 +21,32 @@ from genetic_algorithm import meta_space
 from genetic_algorithm.fighting_ice_problem import FightingIceProblem
 
 
-def _transfer_worker_tmp(experiment_name: str) -> list[str]:
+def _transfer_worker_tmp(experiment_name: str) -> str:
+    import socket
+    import shutil
+    import zipfile
     from pathlib import Path
+    import constants as c
 
-    import functions as f
+    hostname = socket.gethostname()
+    project_root = Path(c.BASE_PATH) if c.BASE_PATH else Path.cwd()
+    log_dir = project_root / "log"
+    log_dir.mkdir(exist_ok=True, parents=True)
 
-    transferred = []
-    for d in Path("/tmp").iterdir():
-        if d.is_dir() and experiment_name in d.name:
-            try:
-                f.transfer_tmp_to_nfs(d)
-                transferred.append(str(d))
-            except Exception as e:
-                print(f"[WARN] transfer failed for {d}: {e}")
-    return transferred
+    dirs_to_zip = [d for d in Path("/tmp").iterdir() if d.is_dir() and experiment_name in d.name]
+
+    zip_path = log_dir / f"{experiment_name}_{hostname}.zip"
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for d in dirs_to_zip:
+            for file in d.rglob("*"):
+                if file.is_file():
+                    zf.write(file, file.relative_to(Path("/tmp")))
+
+    for d in dirs_to_zip:
+        shutil.rmtree(d, ignore_errors=True)
+
+    return str(zip_path)
+
 
 if __name__ == "__main__":
     f.set_random_seeds(c.GLOBAL_SEED)
@@ -66,8 +79,8 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    meta_subspace = meta_space.CONCAT_V1
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_concat_30_gen")
+    meta_subspace = meta_space.CHARACTER_SPEED
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_character_speed_parallel")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -78,9 +91,9 @@ if __name__ == "__main__":
         previous_result = f.resume_algorithm(None)
         termination: any = get_termination(
             c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
-            n_max_gen=30,
+            n_max_gen=10,
             ftol=1e-6,
-            period=10,
+            period=6,
         )
 
         start_time = time.perf_counter()
@@ -91,11 +104,11 @@ if __name__ == "__main__":
                 experiment_name=experiment_name,
                 dask_client=client,
                 # bigbatch -> 32
-                # engine_multiplier=4,
-                # no_matches=8,
+                engine_multiplier=4,
+                no_matches=8,
                 # stampede -> 30
-                engine_multiplier=5,
-                no_matches=6,
+                # engine_multiplier=5,
+                # no_matches=6,
                 # local run
                 # engine_multiplier=1,
                 # no_matches=1,
@@ -174,16 +187,28 @@ if __name__ == "__main__":
                 verbose=True,
             )
 
-            # We are going to do one massive move of all the files in tmp
             if platform.system() == "Linux":
                 file_transfer_starter = time.perf_counter()
-                print("Transferring /tmp data from all workers to NFS...")
+                print("Zipping /tmp data on all workers and transferring to NFS...")
 
                 transfer_results = client.run(_transfer_worker_tmp, experiment_name)
-                for worker, dirs in transfer_results.items():
-                    print(f"{worker}: transferred {dirs}")
+                for worker, zip_path in transfer_results.items():
+                    print(f"{worker}: created {zip_path}")
 
-                print(f"file transfer done, time in seconds: {time.perf_counter() - file_transfer_starter}")
+                project_root = Path(c.BASE_PATH) if c.BASE_PATH else Path.cwd()
+                log_dir = project_root / "log"
+                node_zips = list(log_dir.glob(f"{experiment_name}_*.zip"))
+
+                if node_zips:
+                    final_zip_path = log_dir / f"{experiment_name}_all.zip"
+                    with zipfile.ZipFile(final_zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                        for node_zip in node_zips:
+                            zf.write(node_zip, node_zip.name)
+                    for node_zip in node_zips:
+                        node_zip.unlink()
+                    print(f"Final archive: {final_zip_path}")
+
+                print(f"File transfer done, time in seconds: {time.perf_counter() - file_transfer_starter}")
         else:
             # This only works for COMPLETED terminations, can't stop midway
             print("Continuing experiment")
