@@ -66,8 +66,8 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    meta_subspace = meta_space.DAMAGE
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_damage_parallel")
+    meta_subspace = meta_space.CONCAT_V1
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_concat_30_gen")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -78,9 +78,9 @@ if __name__ == "__main__":
         previous_result = f.resume_algorithm(None)
         termination: any = get_termination(
             c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
-            n_max_gen=10,
+            n_max_gen=30,
             ftol=1e-6,
-            period=6,
+            period=10,
         )
 
         start_time = time.perf_counter()
@@ -91,11 +91,11 @@ if __name__ == "__main__":
                 experiment_name=experiment_name,
                 dask_client=client,
                 # bigbatch -> 32
-                engine_multiplier=4,
-                no_matches=8,
+                # engine_multiplier=4,
+                # no_matches=8,
                 # stampede -> 30
-                # engine_multiplier=5,
-                # no_matches=6,
+                engine_multiplier=5,
+                no_matches=6,
                 # local run
                 # engine_multiplier=1,
                 # no_matches=1,
