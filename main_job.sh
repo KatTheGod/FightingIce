@@ -2,7 +2,7 @@
 #SBATCH -p bigbatch
 #SBATCH -c 14
 #SBATCH -N 6
-#SBATCH -J pms_cs
+#SBATCH -J pms_eng
 #SBATCH --ntasks-per-node=1
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
