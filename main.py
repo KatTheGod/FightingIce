@@ -1,5 +1,5 @@
-import time
 import platform
+import time
 from pathlib import Path
 
 import dill
@@ -19,8 +19,10 @@ import functions as f
 from genetic_algorithm import meta_space
 from genetic_algorithm.fighting_ice_problem import FightingIceProblem
 
+
 def _transfer_worker_tmp(experiment_name: str) -> list[str]:
     from pathlib import Path
+
     import functions as f
 
     transferred = []
@@ -64,8 +66,8 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    meta_subspace = meta_space.CONCAT_V1
-    experiment_name: str = meta_subspace.derive_experiment_name("testing_concat_v1")
+    meta_subspace = meta_space.DAMAGE
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_damage_parallel")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -89,11 +91,11 @@ if __name__ == "__main__":
                 experiment_name=experiment_name,
                 dask_client=client,
                 # bigbatch -> 32
-                # engine_multiplier=4,
-                # no_matches=8,
+                engine_multiplier=4,
+                no_matches=8,
                 # stampede -> 30
-                engine_multiplier=5,
-                no_matches=6,
+                # engine_multiplier=5,
+                # no_matches=6,
                 # local run
                 # engine_multiplier=1,
                 # no_matches=1,
