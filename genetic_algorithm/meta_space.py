@@ -12,7 +12,7 @@ Examples:
 import math
 import re
 from dataclasses import dataclass, field, replace
-from itertools import product
+from itertools import combinations, product
 from pathlib import Path
 
 import constants as c
@@ -110,7 +110,6 @@ class MetaStateSubset:
             exclude_list=exclude_list,
         )
 
-
     def __eq__(self, other: None) -> bool:
         if not isinstance(other, MetaStateSubset):
             return NotImplemented
@@ -162,6 +161,30 @@ class MetaStateSubset:
             f"{derived_experiment_name}_{experiment_name_number + 1}"  #
             if unique
             else derived_experiment_name
+        )
+
+    @classmethod
+    def from_meta_space_list(
+        cls,
+        meta_space_list: list["MetaStateSubset"],
+        index: int,
+    ) -> "MetaStateSubset":
+        meta_subspace: list[tuple[MotionNamesEnum, MotionHeadersEnum]] = []
+        limits: list[RangeLimit] = []
+        meta_space_numbers: list[int] = []
+
+        for meta_space in meta_space_list:
+            meta_subspace.extend(meta_space.meta_subspace)
+            limits.extend(meta_space.limits)
+            meta_space_numbers.append(str(meta_space.index))
+
+        meta_subspace = list({*meta_subspace})
+        return cls.from_meta_subspace(
+            index=index,
+            name=f"mse_{'v'.join(meta_space_numbers)}_concat",
+            description="Concat experiments",
+            meta_subspace=meta_subspace,
+            limits=limits,
         )
 
 
@@ -860,3 +883,29 @@ CONCAT_V1 = MetaStateSubset.from_meta_subspace(
     ],
 )
 add_to_collection(CONCAT_V1)
+
+# From here, we are doing some pairwise operations, but we want them here, but calculated at the same time
+# We know there are going to be 21, so its from 11 to 32
+_pairwise_meta_subspaces: list[tuple[MetaStateSubset, MetaStateSubset]] = list(
+    combinations(
+        iterable=[
+            CHARACTER_SPEED,
+            ENERGY,
+            ATTACK_UP_TIME,
+            PROJECTILE,
+            COMBO,
+            STUNNING,
+            DAMAGE,
+        ],
+        r=2,
+    )
+)
+
+pairwise_experiments: list[MetaStateSubset] = []
+for index, pairwise_meta_space in enumerate(_pairwise_meta_subspaces):
+    pairwise_experiments.append(
+        MetaStateSubset.from_meta_space_list(
+            list(pairwise_meta_space),
+            11 + index,
+        )
+    )
