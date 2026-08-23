@@ -520,7 +520,7 @@ async def orchestrate_matches(
         print("Waiting for all engines to be ready")
         await asyncio.wait_for(
             asyncio.gather(*(event.wait() for event in simulator_ready_events)),
-            timeout=30.0,
+            timeout=120.0 if c.PARTITION == "batch" else 30.0,
         )
         print("All engines are ready")
     except asyncio.TimeoutError:
