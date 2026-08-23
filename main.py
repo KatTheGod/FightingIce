@@ -79,8 +79,8 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    meta_subspace = meta_space.pairwise_experiments[2]
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_pairwise_2")
+    meta_subspace = meta_space.pairwise_experiments[3]
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_pairwise_3")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
