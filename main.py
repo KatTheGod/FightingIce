@@ -81,8 +81,8 @@ if __name__ == "__main__":
     # ]
     # meta_subspace = meta_space.pairwise_experiments[1]
     # experiment_name: str = meta_subspace.derive_experiment_name("mse_pairwise_1")
-    meta_subspace = meta_space.CONCAT_V2
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_all_parallel_gen_30")
+    meta_subspace = meta_space.PROJECTILE
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_projectile_parallel")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -93,9 +93,9 @@ if __name__ == "__main__":
         previous_result = f.resume_algorithm(None)
         termination: any = get_termination(
             c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
-            n_max_gen=30,
+            n_max_gen=10,
             ftol=1e-6,
-            period=10,
+            period=6,
         )
 
         start_time = time.perf_counter()
