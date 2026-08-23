@@ -79,7 +79,7 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    pairwise_experiment_count = 3
+    pairwise_experiment_count = 4
     meta_subspace = meta_space.pairwise_experiments[pairwise_experiment_count]
     experiment_name: str = meta_subspace.derive_experiment_name(f"mse_pairwise_{pairwise_experiment_count}")
     # meta_subspace = meta_space.COMBO
@@ -110,11 +110,11 @@ if __name__ == "__main__":
                 # engine_multiplier=4,
                 # no_matches=8,
                 # stampede -> 30
-                engine_multiplier=5,
-                no_matches=6,
+                # engine_multiplier=5,
+                # no_matches=6,
                 # batch -> 30
-                # engine_multiplier=2,
-                # no_matches=15,
+                engine_multiplier=2,
+                no_matches=15,
                 # local run
                 # engine_multiplier=1,
                 # no_matches=1,
@@ -170,17 +170,17 @@ if __name__ == "__main__":
                     15 * 360 -> 5400 Games
 
                 Cluster Capabilities:
-                    Nodes == 10
+                    Nodes == 8
                     Cores == 6
 
                     -> each node handles 1 individual
-                    5400 / 10 -> 540 Games in sequence
+                    5400 / 8 -> 675 Games in sequence
 
                 Time Estimations
                     Minutes:
-                        1.0: 9 hours
-                        1.5: 13.5 hours
-                        2.0: 18 hours (Hanging on limit)
+                        1.0: 11.25 (15 min) hours
+                        1.5: 16,875 hours
+                        2.0: 22.5 hours (Hanging on limit)
             """
             res = minimize(
                 problem=problem,
