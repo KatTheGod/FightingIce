@@ -15,6 +15,8 @@ from dataclasses import dataclass, field, replace
 from itertools import combinations, product
 from pathlib import Path
 
+from typing_extensions import deprecated
+
 import constants as c
 from motion_classes.motion_editor import MAX_FRAME_NUMBERS
 from motion_classes.motion_headers import MotionHeadersEnum
@@ -51,6 +53,7 @@ class MetaStateSubset:
         index: int,
         name: str,
         description: str,
+        *,
         motion_subset: list[MotionNamesEnum],
         header_subset: list[MotionHeadersEnum],
         limits: list[RangeLimit],
@@ -85,6 +88,7 @@ class MetaStateSubset:
         self.set_uniqueness_limit()
 
     @classmethod
+    @deprecated("Dont use anymore")
     def from_meta_subspace(
         cls,
         index: int,
@@ -92,13 +96,14 @@ class MetaStateSubset:
         description: str,
         meta_subspace: list[tuple[MotionNamesEnum, MotionHeadersEnum]],
         limits: list[RangeLimit],
+        exclude_list: list[tuple[MotionNamesEnum, MotionHeadersEnum]] | None = None,
     ) -> "MetaStateSubset":
         motion_subset = list(dict.fromkeys(m for m, _ in meta_subspace))
         header_subset = list(dict.fromkeys(h for _, h in meta_subspace))
 
         full_product = set(product(motion_subset, header_subset))
         missing = list(full_product - set(meta_subspace))
-        exclude_list = missing or None
+        exclude_list.extend(missing or [])
 
         return cls(
             index=index,
@@ -110,6 +115,47 @@ class MetaStateSubset:
             exclude_list=exclude_list,
         )
 
+    @classmethod
+    def from_meta_subspace_v2(
+        cls,
+        *,
+        index: int,
+        name: str,
+        description: str,
+        meta_subspace: list[tuple[MotionNamesEnum, MotionHeadersEnum]],
+        limits: list[RangeLimit],
+        exclude_list: list[tuple[MotionNamesEnum, MotionHeadersEnum]] | None,
+    ) -> "MetaStateSubset":
+        new_object: MetaStateSubset = cls(
+            index,
+            name,
+            description,
+            motion_subset=[],
+            header_subset=[],
+            limits=[],
+        )
+
+        new_object.index = index
+        new_object.name = name
+        new_object.description = description
+        new_object.limits = limits
+
+        motion_subset: set[MotionNamesEnum] = set()
+        header_subset: set[MotionHeadersEnum] = set()
+
+        for meta_subspace_item in meta_subspace:
+            motion_subset.add(meta_subspace_item[0])
+            header_subset.add(meta_subspace_item[1])
+
+        new_object.motion_subset = list(motion_subset)
+        new_object.header_subset = list(header_subset)
+        new_object.meta_subspace = meta_subspace
+        new_object.exclude_list = exclude_list
+
+        new_object.validate_limits()
+        new_object.set_uniqueness_limit()
+        return new_object
+
     def __eq__(self, other: None) -> bool:
         if not isinstance(other, MetaStateSubset):
             return NotImplemented
@@ -118,15 +164,24 @@ class MetaStateSubset:
 
     def validate_limits(self) -> None:
         limits_motions = set()
+        exclude_list_set = set(self.exclude_list or [])
         for limit in self.limits:
-            limits_motions.update(limit.motions_names)
+            # We aren't going to add a limit if its in the exclude list
+            limit_meta_subspace = {*list(product(limit.motions_names, limit.header_subset))} - exclude_list_set
+            for limit_meta_subspace_item in limit_meta_subspace:
+                limits_motions.add(limit_meta_subspace_item[0])
 
-        if set(self.motion_subset) != limits_motions:
-            print(f"Invalid meta space definition for: {self.name}\nMotion Subset: {set(self.motion_subset)}\nLimit Motion Subset: {limits_motions}")
-            if len(set(self.motion_subset)) > len(limits_motions):
-                print(f"Diff (Motion Subset More): {set(self.motion_subset) - limits_motions}")
+        motion_subset = set()
+        for meta_subspace_item in self.meta_subspace:
+            motion_subset.add(meta_subspace_item[0])
+
+        if motion_subset != limits_motions:
+            print(f"Invalid meta space definition for: {self.name}\nMotion Subset: {motion_subset}\nLimit Motion Subset: {limits_motions}")
+            if len(motion_subset) > len(limits_motions):
+                print(f"Diff (Motion Subset More): {motion_subset - limits_motions}")
             else:
-                print(f"Diff (Limits Motion More): {limits_motions - set(self.motion_subset)}")
+                print(f"Diff (Limits Motion More): {limits_motions - motion_subset}")
+                print(f"LIMITS: {self.limits}")
             raise RuntimeError("Invalid Meta Space Config")
 
     """
@@ -170,21 +225,25 @@ class MetaStateSubset:
         index: int,
     ) -> "MetaStateSubset":
         meta_subspace: list[tuple[MotionNamesEnum, MotionHeadersEnum]] = []
+        exclude_list: list[tuple[MotionNamesEnum, MotionHeadersEnum]] = []
         limits: list[RangeLimit] = []
         meta_space_numbers: list[int] = []
 
         for meta_space in meta_space_list:
             meta_subspace.extend(meta_space.meta_subspace)
+            exclude_list.extend(meta_space.exclude_list or [])
             limits.extend(meta_space.limits)
             meta_space_numbers.append(str(meta_space.index))
 
         meta_subspace = list({*meta_subspace})
-        return cls.from_meta_subspace(
+        exclude_list = list({*exclude_list})
+        return cls.from_meta_subspace_v2(
             index=index,
             name=f"mse_{'v'.join(meta_space_numbers)}_concat",
             description="Concat experiments",
             meta_subspace=meta_subspace,
             limits=limits,
+            exclude_list=exclude_list,
         )
 
 
@@ -213,7 +272,7 @@ def get_limit(
                     max=0,
                 )
 
-    raise RuntimeError(f"Requested limit for {adjustment}, but cannot find in meta subspace: {meta_subspace}")
+    raise RuntimeError(f"Requested limit for {adjustment}, but cannot find in meta subspace: {meta_subspace.meta_subspace}")
 
 
 BASIC_STAND_A_B = MetaStateSubset(
@@ -881,6 +940,17 @@ CONCAT_V1 = MetaStateSubset.from_meta_subspace(
         *STUNNING.limits,
         *DAMAGE.limits,
     ],
+    exclude_list=list(
+        {
+            *(CHARACTER_SPEED.exclude_list or []),
+            *(ENERGY.exclude_list or []),
+            *(PROJECTILE.exclude_list or []),
+            *(COMBO.exclude_list or []),
+            *(ATTACK_UP_TIME.exclude_list or []),
+            *(STUNNING.exclude_list or []),
+            *(DAMAGE.exclude_list or []),
+        }
+    ),
 )
 add_to_collection(CONCAT_V1)
 
@@ -903,9 +973,61 @@ _pairwise_meta_subspaces: list[tuple[MetaStateSubset, MetaStateSubset]] = list(
 
 pairwise_experiments: list[MetaStateSubset] = []
 for index, pairwise_meta_space in enumerate(_pairwise_meta_subspaces):
+    if index == 4:
+        t = 1
     pairwise_experiments.append(
         MetaStateSubset.from_meta_space_list(
             list(pairwise_meta_space),
             11 + index,
         )
     )
+    add_to_collection(pairwise_experiments[-1])
+
+# From here, we continue from 32
+
+CONCAT_V2 = MetaStateSubset.from_meta_subspace_v2(
+    index=32,
+    name="2-en-mass",
+    description="""
+        This is going to be a massive combination of the previous 9 experiments
+        Excluding:
+            attack hit-boxes
+            basic_A_B
+            damage V2
+        Just fixed the broken concat algorithm previously used.
+    """,
+    meta_subspace=list(
+        {
+            *CHARACTER_SPEED.meta_subspace,
+            *ENERGY.meta_subspace,
+            *PROJECTILE.meta_subspace,
+            *COMBO.meta_subspace,
+            *ATTACK_UP_TIME.meta_subspace,
+            *STUNNING.meta_subspace,
+            *DAMAGE.meta_subspace,
+        }
+    ),
+    # For limits, I think its safe to assume we wont get repeating / conflicting ones...
+    # Otherwise, we would even have to rethink that solution
+    limits=[
+        *CHARACTER_SPEED.limits,
+        *ENERGY.limits,
+        *PROJECTILE.limits,
+        *COMBO.limits,
+        *ATTACK_UP_TIME.limits,
+        *STUNNING.limits,
+        *DAMAGE.limits,
+    ],
+    exclude_list=list(
+        {
+            *(CHARACTER_SPEED.exclude_list or []),
+            *(ENERGY.exclude_list or []),
+            *(PROJECTILE.exclude_list or []),
+            *(COMBO.exclude_list or []),
+            *(ATTACK_UP_TIME.exclude_list or []),
+            *(STUNNING.exclude_list or []),
+            *(DAMAGE.exclude_list or []),
+        }
+    ),
+)
+add_to_collection(CONCAT_V2)
