@@ -79,7 +79,7 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    pairwise_experiment_count = 2
+    pairwise_experiment_count = 3
     meta_subspace = meta_space.pairwise_experiments[pairwise_experiment_count]
     experiment_name: str = meta_subspace.derive_experiment_name(f"mse_pairwise_{pairwise_experiment_count}")
     # meta_subspace = meta_space.COMBO
