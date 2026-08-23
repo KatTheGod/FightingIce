@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH -p bigbatch
-#SBATCH -c 14
-#SBATCH -N 6
-#SBATCH -J mse_cmb
+#SBATCH -p stampede
+#SBATCH -c 16
+#SBATCH -N 5
+#SBATCH -J mse_pw2
 #SBATCH --ntasks-per-node=1
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
@@ -16,8 +16,8 @@ mkdir -p dask_schedulers
 PROJECT_ROOT="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
-NODES=6
-CORES=14
+NODES=5
+CORES=16
 
 # Computing nthreads
 ENGINE_MULTIPLIER=4

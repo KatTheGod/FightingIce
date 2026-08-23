@@ -79,10 +79,11 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    # meta_subspace = meta_space.pairwise_experiments[1]
-    # experiment_name: str = meta_subspace.derive_experiment_name("mse_pairwise_1")
-    meta_subspace = meta_space.COMBO
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_combo_parallel")
+    pairwise_experiment_count = 2
+    meta_subspace = meta_space.pairwise_experiments[pairwise_experiment_count]
+    experiment_name: str = meta_subspace.derive_experiment_name(f"mse_pairwise_{pairwise_experiment_count}")
+    # meta_subspace = meta_space.COMBO
+    # experiment_name: str = meta_subspace.derive_experiment_name("mse_combo_parallel")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -106,11 +107,11 @@ if __name__ == "__main__":
                 experiment_name=experiment_name,
                 dask_client=client,
                 # bigbatch -> 32
-                engine_multiplier=4,
-                no_matches=8,
+                # engine_multiplier=4,
+                # no_matches=8,
                 # stampede -> 30
-                # engine_multiplier=5,
-                # no_matches=6,
+                engine_multiplier=5,
+                no_matches=6,
                 # batch -> 30
                 # engine_multiplier=2,
                 # no_matches=15,
