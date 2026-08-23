@@ -79,8 +79,8 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    meta_subspace = meta_space.pairwise_experiments[1]
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_pairwise_index_1")
+    meta_subspace = meta_space.ENERGY
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_energy_parallel")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -104,11 +104,11 @@ if __name__ == "__main__":
                 experiment_name=experiment_name,
                 dask_client=client,
                 # bigbatch -> 32
-                engine_multiplier=4,
-                no_matches=8,
+                # engine_multiplier=4,
+                # no_matches=8,
                 # stampede -> 30
-                # engine_multiplier=5,
-                # no_matches=6,
+                engine_multiplier=5,
+                no_matches=6,
                 # local run
                 # engine_multiplier=1,
                 # no_matches=1,
