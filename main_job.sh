@@ -16,6 +16,7 @@ mkdir -p dask_schedulers
 PROJECT_ROOT="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
+PARTITION="batch"
 NODES=8
 CORES=6
 
@@ -48,5 +49,5 @@ srun --quiet \
     --resources "cores=$CORES" \
     --no-nanny &
 
-conda run -n FI_3_12_13 python main.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH
+conda run -n FI_3_12_13 python main.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH -p $PARTITION
 # conda run -n FI_3_12_13 python experiments/round_robin.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH
