@@ -25,7 +25,7 @@ N_PARTITIONS=7 # Don't change me often
 N_NEIGHBORS=8 # Don't change me often
 EXPERIMENT_NAME="mse_projectile_parallel" # NB!!
 PARTITION="stampede"
-NODES=6
+NODES=5
 CORES=16
 
 # Computing nthreads
