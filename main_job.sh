@@ -16,15 +16,15 @@ mkdir -p dask_schedulers
 PROJECT_ROOT="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
-N_GEN=10
-GEN_PERIOD=6
-META_SPACE_INDEX=0
+N_GEN=30
+GEN_PERIOD=10
+META_SPACE_INDEX=32
 ENGINE_MULTIPLIER=4
 NO_MATCHES=8
 N_PARTITIONS=7 # Don't change me often
 N_NEIGHBORS=8 # Don't change me often
 EXPERIMENT_NAME="mse_all_gen_30_parallel" # NB!!
-PARTITION="batch"
+PARTITION="bigbatch"
 NODES=12
 CORES=14
 
