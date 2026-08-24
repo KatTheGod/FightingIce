@@ -16,12 +16,19 @@ mkdir -p dask_schedulers
 PROJECT_ROOT="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
+N_GEN=10
+GEN_PERIOD=6
+META_SPACE_INDEX=0
+ENGINE_MULTIPLIER=4
+NO_MATCHES=8
+N_PARTITIONS=7 # Don't change me often
+N_NEIGHBORS=8 # Don't change me often
+EXPERIMENT_NAME="mse_all_gen_30_parallel" # NB!!
 PARTITION="batch"
 NODES=12
 CORES=14
 
 # Computing nthreads
-ENGINE_MULTIPLIER=4
 THREADS_PER_WORKER=$(( (CORES / (ENGINE_MULTIPLIER * 3)) > 0 ? (CORES / (ENGINE_MULTIPLIER * 3)) : 1 ))
 
 BASE_PATH="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
@@ -49,5 +56,14 @@ srun --quiet \
     --resources "cores=$CORES" \
     --no-nanny &
 
-conda run -n FI_3_12_13 python main.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH -p $PARTITION
 # conda run -n FI_3_12_13 python experiments/round_robin.py -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH
+conda run -n FI_3_12_13 python main.py \
+    -sf $DASK_FILE -n $NODES -c $CORES -bp $BASE_PATH -p $PARTITION \
+    --experiment_name $EXPERIMENT_NAME \
+    --n_gen $N_GEN \
+    --gen_period $GEN_PERIOD \
+    --meta_space_index $META_SPACE_INDEX \
+    --engine_multiplier $ENGINE_MULTIPLIER \
+    --no_matches $NO_MATCHES \
+    --n_partitions $N_PARTITIONS \
+    --n_neighbors $N_NEIGHBORS

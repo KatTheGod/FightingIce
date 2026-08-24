@@ -254,6 +254,8 @@ def add_to_collection(meta_space_subset: MetaStateSubset) -> None:
     if meta_space_subset.index in META_SUBSPACE_COLLECTION:
         raise KeyError(f"Index: {meta_space_subset.index} already existed in collection: {', '.join(META_SUBSPACE_COLLECTION.keys())}")
 
+    META_SUBSPACE_COLLECTION[meta_space_subset.index, meta_space_subset]
+
 
 def get_limit(
     meta_subspace: MetaStateSubset,
@@ -973,8 +975,6 @@ _pairwise_meta_subspaces: list[tuple[MetaStateSubset, MetaStateSubset]] = list(
 
 pairwise_experiments: list[MetaStateSubset] = []
 for index, pairwise_meta_space in enumerate(_pairwise_meta_subspaces):
-    if index == 4:
-        t = 1
     pairwise_experiments.append(
         MetaStateSubset.from_meta_space_list(
             list(pairwise_meta_space),

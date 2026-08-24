@@ -15,12 +15,22 @@ EXPERIMENT_NAME: str = "adhoc"
 ZIP_FILES: bool = True
 
 NODES: int = 1
-# This PC kinda stinky, we dont have many cores man
-CORES: int = 6
+CORES: int = 3  # This PC kinda stinky, we dont have many cores man
 EST_RAM_PER_ENGINE_GB: int = 2
 PARTITION: str = "regular"
 SCHEDULER_FILE: str | None = None
 BASE_PATH: str | None = None
+
+# --- Main file args ---
+N_GEN: int = 10
+GEN_PERIOD: int = 6
+META_SPACE_INDEX: int = 0
+# Good for local run
+ENGINE_MULTIPLIER: int = 1
+NO_MATCHES: int = 1
+N_PARTITIONS: int = 7 # Produces 36 individuals on 3 objectives
+N_NEIGHBORS: int = 8 # For 30 - 32 individuals
+# --- Main file args ---
 
 DEFAULT_MOTIONS_PATH: str = str(Path("data") / "characters")
 MOTIONS_FILE_NAME: str = "Motion.csv"
@@ -44,6 +54,12 @@ class Directories(StrEnum):
     SOLUTION_EXPLORER: str = "solution_explorer"
     PLOTS: str = "plots"
     CUSTOM_MOTIONS: str = "custom_motions"
+
+
+class Partitions(StrEnum):
+    BIGBATCH: str = "bigbatch"
+    STAMPEDE: str = "stampede"
+    BATCH: str = "batch"
 
 
 class LOGS:

@@ -85,7 +85,7 @@ def arg_parser() -> str:
     )
     parser.add_argument(
         "-exp",
-        "--game_name",
+        "--experiment_name",
         type=str,
         default="adhoc",
         help="Name of the experiment",
@@ -132,6 +132,48 @@ def arg_parser() -> str:
         default=None,
         help="Multiprocessing: Base path for absolute routing",
     )
+    parser.add_argument(
+        "--n_gen",
+        type=int,
+        default=-1,
+        help="Genetic algorithm max gen count",
+    )
+    parser.add_argument(
+        "--gen_period",
+        type=int,
+        default=-1,
+        help="Genetic algorithm period to consider for ending criteria",
+    )
+    parser.add_argument(
+        "--meta_space_index",
+        type=int,
+        default=-1,
+        help="Index for meta space experiment we are trying to run",
+    )
+    parser.add_argument(
+        "--engine_multiplier",
+        type=int,
+        default=-1,
+        help="Engine multiplier",
+    )
+    parser.add_argument(
+        "--no_matches",
+        type=int,
+        default=-1,
+        help="Match count per engine",
+    )
+    parser.add_argument(
+        "--n_partitions",
+        type=int,
+        default=-1,
+        help="Partition count for pymoo",
+    )
+    parser.add_argument(
+        "--n_neighbors",
+        type=int,
+        default=-1,
+        help="Neighbor count for pymoo",
+    )
 
     # Booleans (Flags)
     # action="store_true" means if the flag is present, it's True. If not, it's False.
@@ -166,8 +208,8 @@ def arg_parser() -> str:
     )
     c.EXPERIMENT_NAME = (
         c.EXPERIMENT_NAME  #
-        if args.game_name == "adhoc"
-        else args.game_name
+        if args.experiment_name == "adhoc"
+        else args.experiment_name
     )
     c.ZIP_FILES = (
         c.ZIP_FILES  #
@@ -200,7 +242,45 @@ def arg_parser() -> str:
         else args.base_path
     )
 
-    return args.game_name
+    # From here, we are going to define some args that are used in the main file.
+    # Really just for queueing jobs
+    c.N_GEN = (
+        c.N_GEN  #
+        if args.n_gen == -1
+        else args.n_gen
+    )
+    c.GEN_PERIOD = (
+        c.GEN_PERIOD  #
+        if args.gen_period == -1
+        else args.gen_period
+    )
+    c.META_SPACE_INDEX = (
+        c.META_SPACE_INDEX  #
+        if args.meta_space_index == -1
+        else args.meta_space_index
+    )
+    c.ENGINE_MULTIPLIER = (
+        c.ENGINE_MULTIPLIER  #
+        if args.engine_multiplier == -1
+        else args.engine_multiplier
+    )
+    c.NO_MATCHES = (
+        c.NO_MATCHES  #
+        if args.no_matches == -1
+        else args.no_matches
+    )
+    c.N_PARTITIONS = (
+        c.N_PARTITIONS  #
+        if args.n_partitions == -1
+        else args.n_partitions
+    )
+    c.N_NEIGHBORS = (
+        c.N_NEIGHBORS  #
+        if args.n_neighbors == -1
+        else args.n_neighbors
+    )
+
+    return args.experiment_name
 
 
 """

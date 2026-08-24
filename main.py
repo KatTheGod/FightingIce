@@ -79,11 +79,12 @@ if __name__ == "__main__":
     #     c.Objectives.competitive_balance,
     #     c.Objectives.uniqueness,
     # ]
-    # pairwise_experiment_count = 9
-    # meta_subspace = meta_space.pairwise_experiments[pairwise_experiment_count]
-    # experiment_name: str = meta_subspace.derive_experiment_name(f"mse_pairwise_{pairwise_experiment_count}")
-    meta_subspace = meta_space.CONCAT_V2
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_all_gen_30_parallel")
+
+    # Use me if you arne't passing via slurm
+    # c.META_SPACE_INDEX = 1
+    # c.EXPERIMENT_NAME = "mse_all_gen_30_parallel"
+    meta_subspace = meta_space.META_SUBSPACE_COLLECTION[c.META_SPACE_INDEX]
+    experiment_name: str = meta_subspace.derive_experiment_name(c.EXPERIMENT_NAME)
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -94,9 +95,9 @@ if __name__ == "__main__":
         previous_result = f.resume_algorithm(None)
         termination: any = get_termination(
             c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
-            n_max_gen=30,
+            n_max_gen=c.N_GEN,
             ftol=1e-6,
-            period=10,
+            period=c.GEN_PERIOD,
         )
 
         start_time = time.perf_counter()
@@ -106,18 +107,8 @@ if __name__ == "__main__":
             problem = FightingIceProblem(
                 experiment_name=experiment_name,
                 dask_client=client,
-                # bigbatch -> 32
-                engine_multiplier=4,
-                no_matches=8,
-                # stampede -> 30
-                # engine_multiplier=5,
-                # no_matches=6,
-                # batch -> 30
-                # engine_multiplier=2,
-                # no_matches=15,
-                # local run
-                # engine_multiplier=1,
-                # no_matches=1,
+                engine_multiplier=c.ENGINE_MULTIPLIER,
+                no_matches=c.NO_MATCHES,
                 game_duration_sec=c.GAME_DURATION_SEC,
                 visual=False,
                 save_fitness=True,
@@ -190,7 +181,7 @@ if __name__ == "__main__":
                     ref_dirs=get_reference_directions(
                         c.pymoo.MOEAD.SpreadType.DAS_DENNIS,
                         # n_partitions=10 == 66
-                        n_partitions=7, # == 36
+                        n_partitions=c.N_PARTITIONS, # == 36
                         # n_partitions=3, # small local tests
                         n_dim=len(c.OBJECTIVE_SET),
                         # n_partitions=29,
@@ -198,7 +189,7 @@ if __name__ == "__main__":
                     # Magic number is 20
                     # n_neighbors=7,
                     # n_neighbors=15, Used for 66 individuals
-                    n_neighbors=8, # Used for 30-32 individuals
+                    n_neighbors=c.N_NEIGHBORS, # Used for 30-32 individuals
                     # n_neighbors=2,
                     decomposition=PBI(theta=10),
                     sampling=IntegerRandomSampling(),
