@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH -p bigbatch
-#SBATCH -c 14
-#SBATCH -N 12
-#SBATCH -J mse_all
+#SBATCH -p stampede
+#SBATCH -c 16
+#SBATCH -N 5
+#SBATCH -J mse_pjt
 #SBATCH --ntasks-per-node=1
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
@@ -16,17 +16,17 @@ mkdir -p dask_schedulers
 PROJECT_ROOT="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
-N_GEN=30
-GEN_PERIOD=10
-META_SPACE_INDEX=32
-ENGINE_MULTIPLIER=4
-NO_MATCHES=8
+N_GEN=10
+GEN_PERIOD=6
+META_SPACE_INDEX=4
+ENGINE_MULTIPLIER=5
+NO_MATCHES=6
 N_PARTITIONS=7 # Don't change me often
 N_NEIGHBORS=8 # Don't change me often
-EXPERIMENT_NAME="mse_all_gen_30_parallel" # NB!!
-PARTITION="bigbatch"
-NODES=12
-CORES=14
+EXPERIMENT_NAME="mse_projectiles_parallel" # NB!!
+PARTITION="stampede"
+NODES=6
+CORES=16
 
 # Computing nthreads
 THREADS_PER_WORKER=$(( (CORES / (ENGINE_MULTIPLIER * 3)) > 0 ? (CORES / (ENGINE_MULTIPLIER * 3)) : 1 ))
