@@ -254,7 +254,7 @@ def add_to_collection(meta_space_subset: MetaStateSubset) -> None:
     if meta_space_subset.index in META_SUBSPACE_COLLECTION:
         raise KeyError(f"Index: {meta_space_subset.index} already existed in collection: {', '.join(META_SUBSPACE_COLLECTION.keys())}")
 
-    META_SUBSPACE_COLLECTION[meta_space_subset.index, meta_space_subset]
+    META_SUBSPACE_COLLECTION[meta_space_subset.index] = meta_space_subset
 
 
 def get_limit(
