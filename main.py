@@ -82,8 +82,8 @@ if __name__ == "__main__":
     # pairwise_experiment_count = 9
     # meta_subspace = meta_space.pairwise_experiments[pairwise_experiment_count]
     # experiment_name: str = meta_subspace.derive_experiment_name(f"mse_pairwise_{pairwise_experiment_count}")
-    meta_subspace = meta_space.ENERGY
-    experiment_name: str = meta_subspace.derive_experiment_name("mse_energy_parallel")
+    meta_subspace = meta_space.CONCAT_V2
+    experiment_name: str = meta_subspace.derive_experiment_name("mse_all_gen_30_parallel")
 
     # TODO: COMPLETE ME
     # We are going to continue / start an experiment
@@ -94,9 +94,9 @@ if __name__ == "__main__":
         previous_result = f.resume_algorithm(None)
         termination: any = get_termination(
             c.pymoo.TERMINATION.DEFAULT_MOO_TERMINATION,
-            n_max_gen=10,
+            n_max_gen=30,
             ftol=1e-6,
-            period=6,
+            period=10,
         )
 
         start_time = time.perf_counter()
@@ -107,11 +107,11 @@ if __name__ == "__main__":
                 experiment_name=experiment_name,
                 dask_client=client,
                 # bigbatch -> 32
-                # engine_multiplier=4,
-                # no_matches=8,
+                engine_multiplier=4,
+                no_matches=8,
                 # stampede -> 30
-                engine_multiplier=5,
-                no_matches=6,
+                # engine_multiplier=5,
+                # no_matches=6,
                 # batch -> 30
                 # engine_multiplier=2,
                 # no_matches=15,

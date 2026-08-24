@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH -p stampede
-#SBATCH -c 16
-#SBATCH -N 5
-#SBATCH -J mse_eng
+#SBATCH -p bigbatch
+#SBATCH -c 14
+#SBATCH -N 12
+#SBATCH -J mse_all
 #SBATCH --ntasks-per-node=1
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
@@ -17,11 +17,11 @@ PROJECT_ROOT="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
 PARTITION="batch"
-NODES=5
-CORES=16
+NODES=12
+CORES=14
 
 # Computing nthreads
-ENGINE_MULTIPLIER=5
+ENGINE_MULTIPLIER=4
 THREADS_PER_WORKER=$(( (CORES / (ENGINE_MULTIPLIER * 3)) > 0 ? (CORES / (ENGINE_MULTIPLIER * 3)) : 1 ))
 
 BASE_PATH="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
