@@ -82,7 +82,11 @@ if __name__ == "__main__":
 
     # Use me if you arne't passing via slurm
     # c.META_SPACE_INDEX = 1
-    # c.EXPERIMENT_NAME = "mse_all_gen_30_parallel"
+    # c.EXPERIMENT_NAME = "mse_test_frame"
+    # c.ENGINE_MULTIPLIER = 1
+    # c.NO_MATCHES = 1
+    # c.N_PARTITIONS = 3
+    # c.N_NEIGHBORS = 2
     meta_subspace = meta_space.META_SUBSPACE_COLLECTION[c.META_SPACE_INDEX]
     experiment_name: str = meta_subspace.derive_experiment_name(c.EXPERIMENT_NAME)
 
