@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -p stmapede
+#SBATCH -p stampede
 #SBATCH -c 16
 #SBATCH -N 5
 #SBATCH -J mse_pw4
