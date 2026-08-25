@@ -2,7 +2,7 @@
 #SBATCH -p bigbatch
 #SBATCH -c 14
 #SBATCH -N 6
-#SBATCH -J mse_pw12
+#SBATCH -J mse_pw13
 #SBATCH --ntasks-per-node=1
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
@@ -18,12 +18,12 @@ export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
 N_GEN=10
 GEN_PERIOD=6
-META_SPACE_INDEX=23
+META_SPACE_INDEX=24
 ENGINE_MULTIPLIER=4
 NO_MATCHES=8
 N_PARTITIONS=7 # Don't change me often
 N_NEIGHBORS=8 # Don't change me often
-EXPERIMENT_NAME="mse_pairwise_12" # NB!!
+EXPERIMENT_NAME="mse_pairwise_13" # NB!!
 PARTITION="bigbatch"
 NODES=6
 CORES=14
