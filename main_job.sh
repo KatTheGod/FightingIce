@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH -p stampede
-#SBATCH -c 16
-#SBATCH -N 5
-#SBATCH -J mse_pw0
+#SBATCH -p bigbatch
+#SBATCH -c 14
+#SBATCH -N 6
+#SBATCH -J mse_pw2
 #SBATCH --ntasks-per-node=1
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
@@ -18,15 +18,15 @@ export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
 N_GEN=10
 GEN_PERIOD=6
-META_SPACE_INDEX=11
-ENGINE_MULTIPLIER=5
-NO_MATCHES=6
+META_SPACE_INDEX=13
+ENGINE_MULTIPLIER=4
+NO_MATCHES=8
 N_PARTITIONS=7 # Don't change me often
 N_NEIGHBORS=8 # Don't change me often
-EXPERIMENT_NAME="mse_pairwise_0" # NB!!
-PARTITION="stampede"
-NODES=5
-CORES=16
+EXPERIMENT_NAME="mse_pairwise_2" # NB!!
+PARTITION="bigbatch"
+NODES=6
+CORES=14
 
 # Computing nthreads
 THREADS_PER_WORKER=$(( (CORES / (ENGINE_MULTIPLIER * 3)) > 0 ? (CORES / (ENGINE_MULTIPLIER * 3)) : 1 ))
