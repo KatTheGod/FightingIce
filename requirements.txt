@@ -25,6 +25,7 @@ bokeh
 certifi
 cffi
 charset-normalizer
+choreographer
 click
 cloudpickle
 cma
@@ -82,9 +83,12 @@ jupyterlab-vim
 jupyterlab_pygments
 jupyterlab_server
 jupyterlab_widgets
+kaleido
 kiwisolver
 lark
+lazy-loader
 locket
+logistro
 MarkupSafe
 matplotlib
 matplotlib-inline
@@ -102,6 +106,7 @@ notebook
 notebook_shim
 numpy
 opencv-python
+orjson
 packaging
 pandas
 pandocfilters
@@ -109,7 +114,9 @@ parso
 partd
 pillow
 platformdirs
+plotly
 port-for
+POT
 prometheus_client
 prompt_toolkit
 propcache
@@ -141,6 +148,7 @@ seaborn
 Send2Trash
 setuptools
 simpervisor
+simplejson
 six
 sortedcontainers
 soupsieve
@@ -162,6 +170,7 @@ wcwidth
 webcolors
 webencodings
 websocket-client
+wheel
 widgetsnbextension
 wrapt
 xarray
@@ -169,4 +178,3 @@ xarray-einstats
 xyzservices
 yarl
 zict
-plotly
