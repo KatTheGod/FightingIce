@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from motion_classes.motion_names import MotionNamesEnum
 
 
 @dataclass
@@ -23,6 +24,12 @@ class Projectile:
 
 
 @dataclass
+class PlayerActions:
+    p1_action: MotionNamesEnum
+    p2_action: MotionNamesEnum
+
+
+@dataclass
 class FrameData:
     frame: int
     hitPoints: list[int]
@@ -31,6 +38,7 @@ class FrameData:
     characterSpeeds: list[Vector]
     projectileInformation: list[Projectile | None]
     characterHitBoxes: list[HitArea]
+    playerActions: PlayerActions
 
 
 def parse_frame_data(raw_data: list[dict[str, any]]) -> tuple[list[FrameData | None], int]:
@@ -48,22 +56,22 @@ def parse_frame_data(raw_data: list[dict[str, any]]) -> tuple[list[FrameData | N
             HitArea(**box)  #
             if box
             else None
-            for box in frame.get('attackHitBoxes', [])
+            for box in frame.get("attackHitBoxes", [])
         ]
 
         character_speeds: list[Vector] = [
             Vector(**vec)  #
-            for vec in frame.get('characterSpeeds', [])
+            for vec in frame.get("characterSpeeds", [])
         ]
 
         projectile_information: list[Projectile | None] = []
-        for projectile in frame.get('projectileInformation', []):
+        for projectile in frame.get("projectileInformation", []):
             if projectile is not None:
                 projectile_information.append(
                     Projectile(
-                        playerNumber=projectile['playerNumber'],
-                        hitArea=HitArea(**projectile['hitArea']),
-                        speed=Vector(**projectile['speed']),
+                        playerNumber=projectile["playerNumber"],
+                        hitArea=HitArea(**projectile["hitArea"]),
+                        speed=Vector(**projectile["speed"]),
                     )
                 )
             else:
@@ -71,18 +79,31 @@ def parse_frame_data(raw_data: list[dict[str, any]]) -> tuple[list[FrameData | N
 
         character_hit_boxes: list[HitArea] = [
             HitArea(**box)  #
-            for box in frame.get('characterHitBoxes', [])
+            for box in frame.get("characterHitBoxes", [])
         ]
+
+        raw_player_actions = frame.get(
+            "playerActions",
+            [
+                MotionNamesEnum.NEUTRAL.value,
+                MotionNamesEnum.NEUTRAL.value,
+            ],
+        )
+        player_actions = PlayerActions(
+            MotionNamesEnum(raw_player_actions[0]),
+            MotionNamesEnum(raw_player_actions[1]),
+        )
 
         frames.append(
             FrameData(
-                frame=frame['frame'],
-                hitPoints=frame['hitPoints'],
-                energy=frame['energy'],
+                frame=frame["frame"],
+                hitPoints=frame["hitPoints"],
+                energy=frame["energy"],
                 attackHitBoxes=attack_hit_boxes,
                 characterSpeeds=character_speeds,
                 projectileInformation=projectile_information,
                 characterHitBoxes=character_hit_boxes,
+                playerActions=player_actions,
             )
         )
 

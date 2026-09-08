@@ -2,6 +2,9 @@ import datetime
 import os
 from enum import StrEnum
 from pathlib import Path
+from typing import Final
+
+import numpy as np
 
 GLOBAL_SEED: int = 42
 
@@ -28,8 +31,8 @@ META_SPACE_INDEX: int = 0
 # Good for local run
 ENGINE_MULTIPLIER: int = 1
 NO_MATCHES: int = 1
-N_PARTITIONS: int = 7 # Produces 36 individuals on 3 objectives
-N_NEIGHBORS: int = 8 # For 30 - 32 individuals
+N_PARTITIONS: int = 7  # Produces 36 individuals on 3 objectives
+N_NEIGHBORS: int = 8  # For 30 - 32 individuals
 # --- Main file args ---
 
 DEFAULT_MOTIONS_PATH: str = str(Path("data") / "characters")
@@ -41,6 +44,38 @@ MAX_PROJECTILE_FRAME_COUNT: int = 600
 
 MAX_HIT_BOX_WIDTH: int = 300
 MAX_HIT_BOX_HEIGHT: int = 200
+
+
+class ConfigEMD:
+    STAGE_WIDTH: Final[int] = 960
+    STAGE_HEIGHT: Final[int] = 640
+
+    HORIZONTAL_BINS: Final[int] = 10
+    VERTICAL_BINS: Final[int] = 3
+    HORIZONTAL_BIN_SIZE: Final[float] = float(STAGE_WIDTH) / float(HORIZONTAL_BINS)
+    VERTICAL_BIN_SIZE: Final[float] = float(STAGE_HEIGHT) / float(VERTICAL_BINS)
+
+    _DIAGONAL_MAX: Final[float] = np.sqrt(STAGE_HEIGHT**2 + STAGE_WIDTH**2)
+
+    _HORIZONTAL_BIN_CENTERS: Final[np.ndarray] = np.arange(
+        HORIZONTAL_BIN_SIZE / 2.0,
+        stop=HORIZONTAL_BIN_SIZE * HORIZONTAL_BINS,
+        step=HORIZONTAL_BIN_SIZE,
+    )
+
+    _VERTICAL_BIN_CENTERS: Final[np.ndarray] = np.arange(
+        VERTICAL_BIN_SIZE / 2.0,
+        stop=VERTICAL_BIN_SIZE * VERTICAL_BINS,
+        step=VERTICAL_BIN_SIZE,
+    )
+
+    _grid_cx, _grid_cy = np.meshgrid(_HORIZONTAL_BIN_CENTERS, _VERTICAL_BIN_CENTERS)
+    _bin_cx: np.ndarray = _grid_cx.flatten()
+    _bin_cy: np.ndarray = _grid_cy.flatten()
+
+    COST_MATRIX: Final[np.ndarray] = (
+        np.sqrt((_bin_cx[:, np.newaxis] - _bin_cx[np.newaxis, :]) ** 2 + (_bin_cy[:, np.newaxis] - _bin_cy[np.newaxis, :]) ** 2) / _DIAGONAL_MAX
+    )
 
 
 class Directories(StrEnum):
@@ -176,7 +211,12 @@ end_time = 0
 class Objectives(StrEnum):
     excitement: str = "ex"
     competitive_balance: str = "cb"
-    uniqueness: str = "uq"
+    unique_genotype: str = "gt"
+    unique_phenotype: str = "pt"
 
 
-OBJECTIVE_SET: list[Objectives] = list(Objectives)
+OBJECTIVE_SET: list[Objectives] = [
+    Objectives.excitement,
+    Objectives.competitive_balance,
+    Objectives.unique_phenotype,
+]

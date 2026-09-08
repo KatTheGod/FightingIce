@@ -22,10 +22,11 @@ from genetic_algorithm.fighting_ice_problem import FightingIceProblem
 
 
 def _transfer_worker_tmp(experiment_name: str) -> str:
-    import socket
     import shutil
+    import socket
     import zipfile
     from pathlib import Path
+
     import constants as c
 
     hostname = socket.gethostname()
@@ -77,7 +78,7 @@ if __name__ == "__main__":
     print(f"Dask Dashboard available at: {client.dashboard_link}")
     # c.OBJECTIVE_SET = [
     #     c.Objectives.competitive_balance,
-    #     c.Objectives.uniqueness,
+    #     c.Objectives.unique_genotype,
     # ]
 
     # Use me if you arne't passing via slurm
@@ -185,7 +186,7 @@ if __name__ == "__main__":
                     ref_dirs=get_reference_directions(
                         c.pymoo.MOEAD.SpreadType.DAS_DENNIS,
                         # n_partitions=10 == 66
-                        n_partitions=c.N_PARTITIONS, # == 36
+                        n_partitions=c.N_PARTITIONS,  # == 36
                         # n_partitions=3, # small local tests
                         n_dim=len(c.OBJECTIVE_SET),
                         # n_partitions=29,
@@ -193,7 +194,7 @@ if __name__ == "__main__":
                     # Magic number is 20
                     # n_neighbors=7,
                     # n_neighbors=15, Used for 66 individuals
-                    n_neighbors=c.N_NEIGHBORS, # Used for 30-32 individuals
+                    n_neighbors=c.N_NEIGHBORS,  # Used for 30-32 individuals
                     # n_neighbors=2,
                     decomposition=PBI(theta=10),
                     sampling=IntegerRandomSampling(),

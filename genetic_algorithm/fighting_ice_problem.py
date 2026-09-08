@@ -57,7 +57,7 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
         return np.zeros(shape=len(settings.objective_set))
 
     numerical_differences = np.stack([motion.select_dtypes("number") for motion in mutated_motions])
-    uniqueness_reward = gf.constraint_novelty_search(
+    uniqueness_reward_genotype = gf.constraint_novelty_search(
         numerical_motions=numerical_differences,
         meta_subspace=settings.meta_subspace,
         mapped_numerical_motion_coordinates=settings.mapped_numerical_motion_coordinates,
@@ -100,6 +100,8 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
             )
         )
 
+        uniqueness_reward_phenotype = asyncio.run(gf.calculate_uniqueness(amended_experiment_name))
+
         f.consolidate_data(
             amended_experiment_name,
             exclude_list=[
@@ -109,14 +111,19 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
             tmp_dir=tmp_dir,
         )
 
-        return np.array(
-            [
-                *([-excitement] if c.Objectives.excitement in settings.objective_set else []),
-                *([-competitive_balance] if c.Objectives.competitive_balance in settings.objective_set else []),
-                *([-uniqueness_reward] if c.Objectives.uniqueness in settings.objective_set else []),
-            ],
-            dtype=np.float64,
-        )
+        fitness: list[float] = []
+        for objective in c.OBJECTIVE_SET:
+            match objective:
+                case c.Objectives.excitement:
+                    fitness.append(-excitement)
+                case c.Objectives.competitive_balance:
+                    fitness.append(-competitive_balance)
+                case c.Objectives.unique_phenotype:
+                    fitness.append(-uniqueness_reward_phenotype)
+                case c.Objectives.unique_genotype:
+                    fitness.append(-uniqueness_reward_genotype)
+
+        return np.array(fitness)
 
     except Exception as e:
         # Consider not copying this code over hey...

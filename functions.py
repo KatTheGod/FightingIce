@@ -10,6 +10,7 @@ import subprocess
 import time
 import uuid
 import zipfile
+from collections import Counter
 from collections.abc import Iterator
 from contextlib import contextmanager
 from itertools import islice
@@ -27,7 +28,8 @@ from pymoo.core.result import Result
 import constants as c
 import functions as f
 from agents.KatKickAi import KatKickAi
-from motion_classes.motion_editor import MotionEditor
+from constants import CHARACTERS
+from motion_classes.motion_editor import DEFAULT_MOTION_LIST, MotionEditor
 
 
 def parse_argument_str(shorthand: str, full_name: str, default: str | None = None, help: str = "") -> str:
@@ -174,6 +176,12 @@ def arg_parser() -> str:
         default=-1,
         help="Neighbor count for pymoo",
     )
+    parser.add_argument(
+        "--objectives",
+        type=str,
+        default=None,
+        help="Objective set",
+    )
 
     # Booleans (Flags)
     # action="store_true" means if the flag is present, it's True. If not, it's False.
@@ -280,6 +288,15 @@ def arg_parser() -> str:
         else args.n_neighbors
     )
 
+    try:
+        c.OBJECTIVE_SET = (
+            c.OBJECTIVE_SET  #
+            if args.objectives is None
+            else [c.Objectives(objective) for objective in args.objectives.split("_")]
+        )
+    except ValueError as e:
+        parser.error(f"Unknown objective: {e}. Valid values: {[o.value for o in c.Objectives]}")
+
     return args.experiment_name
 
 
@@ -327,13 +344,14 @@ def consolidate_data(
             if folder.is_dir() and folder.name not in log_list:
                 unknown_directories.append(folder.name)
 
-        if len(unknown_directories) != 0:
-            raise FileNotFoundError(
-                "Known log directories are:",  #
-                ",".join(log_list),
-                "\nFound these unknown directories:",
-                ",".join(unknown_directories),
-            )
+        # TODO: Dont commit me, but I dont want this
+        # if len(unknown_directories) != 0:
+        # raise FileNotFoundError(
+        #     "Known log directories are:",  #
+        #     ",".join(log_list),
+        #     "\nFound these unknown directories:",
+        #     ",".join(unknown_directories),
+        # )
 
     # Going to first compress the motions in custom motions
     if c.ZIP_FILES and c.Directories.CUSTOM_MOTIONS not in exclude_list:
@@ -991,3 +1009,57 @@ def resume_algorithm(plk_name: str | None, throw_error: bool = False) -> SimpleN
 def set_random_seeds(seed: int) -> None:
     np.random.seed(seed)
     random.seed(seed)
+
+
+def calculate_population_entropy(population: np.ndarray, result: Result) -> np.ndarray:
+    n_genes = population.shape[1]
+    gene_mins = result.problem.xl
+    gene_maxs = result.problem.xu
+
+    result_entropy_norm = np.empty(n_genes)
+
+    for gene_idx in range(n_genes):
+        values = population[:, gene_idx]
+
+        counts = np.array(list(Counter(values).values()), dtype=float)
+        probs = counts / counts.sum()
+        entropy = -np.sum(probs * np.log2(probs))
+
+        gene_range = int(gene_maxs[gene_idx] - gene_mins[gene_idx]) + 1
+        max_entropy = np.log2(gene_range)
+
+        result_entropy_norm[gene_idx] = entropy / max_entropy
+
+    return result_entropy_norm
+
+
+def calculate_population_distance(population: np.ndarray, result: Result, meta_subspace: list[tuple]) -> np.ndarray:
+    n_genes_per_char = len(meta_subspace)
+    characters = list(CHARACTERS)
+    n_genes_total = n_genes_per_char * len(characters)
+
+    xl = result.problem.xl
+    xu = result.problem.xu
+
+    initial_values = np.empty(n_genes_total)
+
+    for char_idx in range(len(characters)):
+        default_motion = DEFAULT_MOTION_LIST[char_idx]
+        for pair_idx, (motion, header) in enumerate(meta_subspace):
+            gene_idx = char_idx * n_genes_per_char + pair_idx
+            initial_values[gene_idx] = default_motion.loc[motion, header]
+
+    result_dist_norm = np.empty(n_genes_total)
+
+    for gene_idx in range(n_genes_total):
+        initial = initial_values[gene_idx]
+        max_possible = max(initial - xl[gene_idx], xu[gene_idx] - initial)
+
+        if max_possible == 0:
+            result_dist_norm[gene_idx] = 0.0
+            continue
+
+        mean_dist = np.abs(population[:, gene_idx] - initial).mean()
+        result_dist_norm[gene_idx] = mean_dist / max_possible
+
+    return result_dist_norm

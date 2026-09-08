@@ -2,7 +2,7 @@
 #SBATCH -p stampede
 #SBATCH -c 16
 #SBATCH -N 5
-#SBATCH -J mse_pw19
+#SBATCH -J exp_gt
 #SBATCH --ntasks-per-node=1
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
@@ -16,14 +16,16 @@ mkdir -p dask_schedulers
 PROJECT_ROOT="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
+OBJECTIVES="cb_gt"
 N_GEN=10
 GEN_PERIOD=6
-META_SPACE_INDEX=30
+META_SPACE_INDEX=32
 ENGINE_MULTIPLIER=5
 NO_MATCHES=6
-N_PARTITIONS=7 # Don't change me often
+# N_PARTITIONS=7 # Don't change me often
+N_PARTITIONS=35 # specifically to get 46 with 2 objectives
 N_NEIGHBORS=8 # Don't change me often
-EXPERIMENT_NAME="mse_pairwise_19" # NB!!
+EXPERIMENT_NAME="concat_genotype" # NB!!
 PARTITION="stampede"
 NODES=5
 CORES=16
@@ -66,4 +68,5 @@ conda run -n FI_3_12_13 python main.py \
     --engine_multiplier $ENGINE_MULTIPLIER \
     --no_matches $NO_MATCHES \
     --n_partitions $N_PARTITIONS \
+    --objectives $OBJECTIVES \
     --n_neighbors $N_NEIGHBORS

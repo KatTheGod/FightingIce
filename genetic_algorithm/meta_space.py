@@ -52,6 +52,7 @@ class MetaStateSubset:
         self,
         index: int,
         name: str,
+        short_hand: str,
         description: str,
         *,
         motion_subset: list[MotionNamesEnum],
@@ -62,6 +63,7 @@ class MetaStateSubset:
     ) -> None:
         self.index: int = index
         self.name: str = name
+        self.short_hand: str = short_hand
         self.description: str = description
         self.limits = limits
         self.exclude_list = exclude_list
@@ -93,6 +95,7 @@ class MetaStateSubset:
         cls,
         index: int,
         name: str,
+        short_hand: str,
         description: str,
         meta_subspace: list[tuple[MotionNamesEnum, MotionHeadersEnum]],
         limits: list[RangeLimit],
@@ -108,6 +111,7 @@ class MetaStateSubset:
         return cls(
             index=index,
             name=name,
+            short_hand=short_hand,
             description=description,
             motion_subset=motion_subset,
             header_subset=header_subset,
@@ -121,6 +125,7 @@ class MetaStateSubset:
         *,
         index: int,
         name: str,
+        short_hand: str,
         description: str,
         meta_subspace: list[tuple[MotionNamesEnum, MotionHeadersEnum]],
         limits: list[RangeLimit],
@@ -129,6 +134,7 @@ class MetaStateSubset:
         new_object: MetaStateSubset = cls(
             index,
             name,
+            short_hand,
             description,
             motion_subset=[],
             header_subset=[],
@@ -137,6 +143,7 @@ class MetaStateSubset:
 
         new_object.index = index
         new_object.name = name
+        new_object.short_hand = short_hand
         new_object.description = description
         new_object.limits = limits
 
@@ -240,6 +247,7 @@ class MetaStateSubset:
         return cls.from_meta_subspace_v2(
             index=index,
             name=f"mse_{'v'.join(meta_space_numbers)}_concat",
+            short_hand="_".join([meta_space.short_hand for meta_space in meta_space_list]),
             description="Concat experiments",
             meta_subspace=meta_subspace,
             limits=limits,
@@ -280,6 +288,7 @@ def get_limit(
 BASIC_STAND_A_B = MetaStateSubset(
     index=0,
     name="BASIC_STAND_A_B",
+    short_hand="bsc",
     description="""
         First experiment done just to test the waters.
         Stand A and Stand B, adjusting the attack hit damage
@@ -306,6 +315,7 @@ add_to_collection(BASIC_STAND_A_B)
 CHARACTER_SPEED = MetaStateSubset(
     index=1,
     name="CHARACTER_SPEED",
+    short_hand="csp",
     description="""
         We are going to be adjusting the movement speed.
         Not really playing in dimensions that aren"t specified.
@@ -351,6 +361,7 @@ add_to_collection(CHARACTER_SPEED)
 # HIT_BOXES = MetaStateSubset(
 #     index=2,
 #     name="HIT_BOXES",
+#     short_hand="hbx",
 #     description="""
 #         First iteration of adjusting the attack hitboxes
 #         We are going to think of a smarter method later.
@@ -420,6 +431,7 @@ add_to_collection(CHARACTER_SPEED)
 ENERGY = MetaStateSubset(
     index=3,
     name="ENERGY",
+    short_hand="eng",
     description="""
         This is going to be a bigger experiment to determine the effect of energy.
         With the full range of energy metrics
@@ -511,6 +523,7 @@ add_to_collection(ENERGY)
 PROJECTILE = MetaStateSubset(
     index=4,
     name="PROJECTILE",
+    short_hand="pjt",
     description="""
         First iteration for adjust the power of projectiles.
         In next iteration, could consider also adjusting the startup.
@@ -637,6 +650,7 @@ add_to_collection(PROJECTILE)
 COMBO = MetaStateSubset(
     index=5,
     name="COMBO",
+    short_hand="cmb",
     description="""
         First iteration for adjust the combo system
         We are really just going to affect the cancellable frame and stuff
@@ -683,6 +697,7 @@ add_to_collection(COMBO)
 ATTACK_UP_TIME = MetaStateSubset(
     index=6,
     name="ATTACK_UP_TIME",
+    short_hand="aut",
     description="""
         We are going to adjust the start up and active time for attacks.
         This will affect their duration and stuff.
@@ -742,9 +757,11 @@ STUNNING_MOTIONS_KNOCK_UP = [
     MotionNamesEnum.AIR_D_DB_BB,
     MotionNamesEnum.STAND_D_DF_FC,
 ]
+
 STUNNING = MetaStateSubset(
     index=7,
     name="STUNNING",
+    short_hand="stn",
     description="""
         Will write some logic to affect the stunning effects.
         For some reason, by default, the throw_A and throw_B dont have an impact X and a recov thing, I think its related to that suffer stuff
@@ -803,6 +820,7 @@ add_to_collection(STUNNING)
 DAMAGE = MetaStateSubset(
     index=8,
     name="damage",
+    short_hand="dmg",
     description="""
         Will write some logic to affect the damage and guard damage effects.
         TODO: we are going to exclude changing AIR_UB, because that"s Garnet"s broken technique.
@@ -875,6 +893,7 @@ add_to_collection(DAMAGE)
 DAMAGE_V2 = MetaStateSubset(
     index=9,
     name="damage-v2",
+    short_hand="dmg_v2",
     description="""
         This is going to be similar to DAMAGE except we are going to remove guard damage from the equation
     """,
@@ -913,6 +932,7 @@ add_to_collection(DAMAGE_V2)
 CONCAT_V1 = MetaStateSubset.from_meta_subspace(
     index=10,
     name="1-en-mass",
+    short_hand="all_v1",
     description="""
         This is going to be a massive combination of the previous 9 experiments
         Excluding:
@@ -988,6 +1008,7 @@ for index, pairwise_meta_space in enumerate(_pairwise_meta_subspaces):
 CONCAT_V2 = MetaStateSubset.from_meta_subspace_v2(
     index=32,
     name="2-en-mass",
+    short_hand="all_v2",
     description="""
         This is going to be a massive combination of the previous 9 experiments
         Excluding:

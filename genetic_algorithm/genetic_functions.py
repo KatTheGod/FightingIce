@@ -7,11 +7,14 @@ import math
 import os
 import pathlib
 import platform
+import re
 import time
+from dataclasses import dataclass
 from datetime import datetime
 from itertools import combinations
 
 import numpy as np
+import ot
 import pandas as pd
 
 import constants as c
@@ -19,7 +22,7 @@ import functions as f
 import motion_classes.motion_editor as me
 import motion_classes.motion_headers as mh
 import motion_classes.motion_names as mn
-from genetic_algorithm.frame_data import parse_frame_data
+from genetic_algorithm.frame_data import HitArea, parse_frame_data
 from genetic_algorithm.meta_space import (
     MetaStateSubset,
     RangeLimit,
@@ -502,7 +505,7 @@ async def calculate_excitement(
     overall_excitement: float = calculate_entropy_score(win_probabilities, frame_window=frame_window, tanh_scale=tanh_scale)
 
     # NOTE: We are not deleting it here because it was a bloody hassle to compress it and use it. Yarre
-    frame_data_file.unlink()
+    # frame_data_file.unlink()
 
     return overall_excitement
 
@@ -525,8 +528,8 @@ def validate_gene(motions: list[pd.DataFrame]) -> bool:
         invalid_uptime_motions_excluding_projectiles: pd.Series = invalid_uptime_motions[~projectile_mask]
 
         # if invalid_uptime_motions_excluding_projectiles.any():
-            # print("1")
-            # return False
+        # print("1")
+        # return False
 
         # Rule 2: Hit-boxes: right >= left and bottom >= top
         character_hit_box_horizontal: pd.Series = (
@@ -634,3 +637,159 @@ def create_random_gene(
             -1,
         )
     )
+
+
+def calculate_individual_jsd(character_action_frequencies: list[np.ndarray]) -> float:
+    for index in range(3):
+        character_action_frequencies[index] /= np.sum(character_action_frequencies[index])
+
+    # JSD -> 0 == identical, which is what we don't want
+    zen_garnet_jsd = jsd(character_action_frequencies[0], character_action_frequencies[1])
+    zen_lud_jsd = jsd(character_action_frequencies[0], character_action_frequencies[2])
+    garnet_lud_jsd = jsd(character_action_frequencies[1], character_action_frequencies[2])
+
+    return f.calculate_harmonic_mean(
+        values=np.array([zen_garnet_jsd, zen_lud_jsd, garnet_lud_jsd]),
+        normalization_value=1,
+        div_zero_slack=1e-12,
+    )
+
+
+def calculate_individual_emd(character_grids: list[np.ndarray]) -> float:
+    for index in range(3):
+        character_grids[index] /= np.sum(character_grids[index])
+
+    # In this context, 1 is most different, which is what we want, so I am not going to do 1-x
+    zen_garnet_emd = ot.emd2(
+        character_grids[0].flatten(),
+        character_grids[1].flatten(),
+        c.ConfigEMD.COST_MATRIX,
+    )
+    zen_lud_emd = ot.emd2(
+        character_grids[0].flatten(),
+        character_grids[2].flatten(),
+        c.ConfigEMD.COST_MATRIX,
+    )
+    garnet_lud_emd = ot.emd2(
+        character_grids[1].flatten(),
+        character_grids[2].flatten(),
+        c.ConfigEMD.COST_MATRIX,
+    )
+
+    return f.calculate_harmonic_mean(
+        values=np.array([zen_garnet_emd, zen_lud_emd, garnet_lud_emd]),
+        normalization_value=1,
+        div_zero_slack=1e-12,
+    )
+
+
+@dataclass
+class CenterDistances:
+    center_x_distance: float
+    player_one_y_bin: float
+    player_two_y_bin: float
+
+
+def get_character_center_distances(character_hit_boxes: list[HitArea]) -> CenterDistances:
+    dist_center_xs = abs(
+        ((character_hit_boxes[0].right + character_hit_boxes[0].left) / 2.0)  #
+        - ((character_hit_boxes[1].right + character_hit_boxes[1].left) / 2.0)
+    )
+
+    center_y_player_one: float = (character_hit_boxes[0].top + character_hit_boxes[0].bottom) / 2.0
+    center_y_player_two: float = (character_hit_boxes[1].top + character_hit_boxes[1].bottom) / 2.0
+
+    horizontal_bin = min(int(dist_center_xs / c.ConfigEMD.STAGE_WIDTH * c.ConfigEMD.HORIZONTAL_BINS), c.ConfigEMD.HORIZONTAL_BINS - 1)
+    vertical_bin_player_one = min(int(center_y_player_one / c.ConfigEMD.STAGE_HEIGHT * c.ConfigEMD.VERTICAL_BINS), c.ConfigEMD.VERTICAL_BINS - 1)
+    vertical_bin_player_two = min(int(center_y_player_two / c.ConfigEMD.STAGE_HEIGHT * c.ConfigEMD.VERTICAL_BINS), c.ConfigEMD.VERTICAL_BINS - 1)
+
+    return CenterDistances(
+        center_x_distance=horizontal_bin,
+        player_one_y_bin=vertical_bin_player_one,
+        player_two_y_bin=vertical_bin_player_two,
+    )
+
+
+async def calculate_uniqueness(experiment_name: str) -> float:
+    # TODO: Could look into saving this file somewhere, because we read it twice now.
+    character_order_combinations: list[tuple[int, int]] = list(combinations([0, 1, 2], 2))
+    frame_data_file: pathlib.Path | None = await wait_for_df_file(experiment_name)
+
+    if frame_data_file is None or not frame_data_file.exists():
+        raise FileNotFoundError(f"cant find the consolidated point file: *{experiment_name}*.json")
+
+    frame_data_json: list[dict[str, any]]
+    with open(str(frame_data_file)) as file:
+        frame_data_json = json.load(file)
+
+    row_count: int = -1
+    if isinstance(frame_data_json, list):
+        row_count = len(frame_data_json)
+
+    # JSD Bins
+    zen_action_frequencies = np.zeros(shape=len(list(mn.MotionNamesEnum)))
+    garnet_action_frequencies = np.zeros(shape=len(list(mn.MotionNamesEnum)))
+    lud_action_frequencies = np.zeros(shape=len(list(mn.MotionNamesEnum)))
+
+    character_action_frequencies: list[np.ndarray] = [
+        zen_action_frequencies,
+        garnet_action_frequencies,
+        lud_action_frequencies,
+    ]
+
+    # EMD bins
+    zen_grid = np.zeros(shape=(c.ConfigEMD.VERTICAL_BINS, c.ConfigEMD.HORIZONTAL_BINS))
+    garnet_grid = np.zeros(shape=(c.ConfigEMD.VERTICAL_BINS, c.ConfigEMD.HORIZONTAL_BINS))
+    lud_grid = np.zeros(shape=(c.ConfigEMD.VERTICAL_BINS, c.ConfigEMD.HORIZONTAL_BINS))
+
+    character_grids: list[np.ndarray] = [
+        zen_grid,
+        garnet_grid,
+        lud_grid,
+    ]
+
+    for row in range(row_count):
+        if row_count == -1:
+            frame_data, _ = parse_frame_data(frame_data_json)
+            raise NotImplementedError("We haven't coded phenotype uniqueness for single matches")
+
+        key_name: str = list(frame_data_json[row].keys())[0]
+        match = re.search(r"instance-(\d+)", key_name)
+        if not match:
+            raise RuntimeError("Failed to find instance regex in uniqueness calculation")
+
+        matchup_number = int(match.group(1)) % 3
+        p1_index, p2_index = character_order_combinations[matchup_number]
+
+        frame_data, _ = parse_frame_data(frame_data_json[row][key_name])
+
+        for frame in frame_data:
+            character_action_frequencies[p1_index][mn.MAPPER[frame.playerActions.p1_action]] += 1
+
+            character_action_frequencies[p2_index][mn.MAPPER[frame.playerActions.p2_action]] += 1
+
+            bin_index = get_character_center_distances(frame.characterHitBoxes)
+
+            character_grids[p1_index][(bin_index.player_one_y_bin, bin_index.center_x_distance)] += 1
+            character_grids[p2_index][(bin_index.player_two_y_bin, bin_index.center_x_distance)] += 1
+
+    # TODO: Think if the fact that being on the left or right makes a difference...
+    jsd_harmonic = calculate_individual_jsd(character_action_frequencies)
+    emd_harmonic = calculate_individual_emd(character_grids)
+
+    return f.calculate_harmonic_mean(np.array([jsd_harmonic, emd_harmonic]))
+
+
+# TODO: We can come up with better names for this
+def kl(a: np.ndarray, b: np.ndarray, epsilon: float = 1e-12) -> float:
+    # For each action: how much does a disagree with b?
+    # If a uses action X a lot but b rarely does -> high surprise
+    # We only look at actions a actually uses (mask out zeros to avoid log(0))
+    mask = a > 0
+    return float(np.sum(a[mask] * np.log2(a[mask] / (b[mask] + epsilon))))
+
+
+def jsd(p: np.ndarray, q: np.ndarray) -> float:
+    # Blend: the average of the two distributions
+    m = 0.5 * (p + q)
+    return 0.5 * kl(p, m) + 0.5 * kl(q, m)
