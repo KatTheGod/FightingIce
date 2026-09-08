@@ -90,6 +90,7 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
                     reps=3,
                 ).reshape(3, -1),
                 tmp_dir=tmp_dir,
+                objective_set=settings.objective_set,
             ),
         )
 
@@ -112,7 +113,7 @@ def evaluate_individual(x: np.ndarray, settings: IndividualSettings) -> np.ndarr
         )
 
         fitness: list[float] = []
-        for objective in c.OBJECTIVE_SET:
+        for objective in settings.objective_set:
             match objective:
                 case c.Objectives.excitement:
                     fitness.append(-excitement)
@@ -150,6 +151,7 @@ class FightingIceProblem(Problem):
         engine_multiplier: int = 1,
         game_duration_sec: int = 60,
         visual: bool = False,
+        objective_set: list[c.Objectives] | None = None,
         **kwargs: Any,
     ) -> None:
 
@@ -160,6 +162,7 @@ class FightingIceProblem(Problem):
         self.engine_multiplier = engine_multiplier
         self.game_duration_sec = game_duration_sec
         self.client = dask_client
+        self.objective_set = objective_set
 
         self.motion_adjustments: list[tuple[str, str]] = self.meta_space_subset.meta_subspace
         self.motion_coordinates: np.ndarray = gf.get_motion_coordinates(self.motion_adjustments)
@@ -186,7 +189,7 @@ class FightingIceProblem(Problem):
         super().__init__(
             elementwise=False,
             **kwargs,
-            n_obj=len(c.OBJECTIVE_SET),
+            n_obj=len(self.objective_set),
             n_ieq_constr=0,
             xl=xl,
             xu=xu,
@@ -210,7 +213,7 @@ class FightingIceProblem(Problem):
             engine_multiplier=self.engine_multiplier,
             game_duration_sec=self.game_duration_sec,
             visual=self.visual,
-            objective_set=c.OBJECTIVE_SET,
+            objective_set=self.objective_set,
         )
 
         futures = self.client.map(

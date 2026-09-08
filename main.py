@@ -118,6 +118,7 @@ if __name__ == "__main__":
                 visual=False,
                 save_fitness=True,
                 meta_subspace=meta_subspace,
+                objective_set=c.OBJECTIVE_SET,
             )
 
             """

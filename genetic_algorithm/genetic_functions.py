@@ -174,10 +174,12 @@ async def orchestrate_matches(
     force_frame_data_unlink: bool = False,
     save_mutated_motions: bool = True,
     tmp_dir: pathlib.Path | None = None,
+    objective_set: list[c.Objectives] | None = None,
 ) -> float:
     c.NO_GAMES = no_matches
     c.POLL_INTERVAL_SEC = 0
     c.GAME_DURATION_SEC = game_duration_sec
+    c.OBJECTIVE_SET = objective_set or c.OBJECTIVE_SET
 
     project_root = pathlib.Path(c.BASE_PATH) if c.BASE_PATH else pathlib.Path.cwd()
 
