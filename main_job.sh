@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH -p bigbatch
 #SBATCH -c 14
-#SBATCH -N 6
-#SBATCH -J exp_pt
+#SBATCH -N 12
+#SBATCH -J jst_pt
 #SBATCH --ntasks-per-node=1
 #SBATCH -o /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/out/slurm.%N.%j.out
 #SBATCH -e /home-mscluster/kkungoane/dare-fighting-ice/FightingIce/err/slurm.%N.%j.err
@@ -16,18 +16,18 @@ mkdir -p dask_schedulers
 PROJECT_ROOT="/home-mscluster/kkungoane/dare-fighting-ice/FightingIce"
 export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT
 
-OBJECTIVES="cb_pt"
+OBJECTIVES="pt"
 N_GEN=10
 GEN_PERIOD=6
 META_SPACE_INDEX=32
 ENGINE_MULTIPLIER=4
-NO_MATCHES=6
+NO_MATCHES=8
 # N_PARTITIONS=7 # Don't change me often
-N_PARTITIONS=35 # specifically to get 46 with 2 objectives
+N_PARTITIONS=72 # specifically to get 46 with 2 objectives
 N_NEIGHBORS=8 # Don't change me often
-EXPERIMENT_NAME="concat_phenotype" # NB!!
+EXPERIMENT_NAME="concat_phenotype_only" # NB!!
 PARTITION="bigbatch"
-NODES=6
+NODES=12
 CORES=14
 # Computing nthreads
 THREADS_PER_WORKER=$(( (CORES / (ENGINE_MULTIPLIER * 3)) > 0 ? (CORES / (ENGINE_MULTIPLIER * 3)) : 1 ))

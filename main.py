@@ -6,6 +6,7 @@ from pathlib import Path
 import dill
 from distributed import Client, LocalCluster
 from pymoo.algorithms.moo.moead import ParallelMOEAD
+from pymoo.algorithms.soo.nonconvex.ga import GA
 from pymoo.core.algorithm import Algorithm
 from pymoo.decomposition.pbi import PBI
 from pymoo.operators.crossover.sbx import SBX
@@ -88,6 +89,7 @@ if __name__ == "__main__":
     # c.NO_MATCHES = 1
     # c.N_PARTITIONS = 3
     # c.N_NEIGHBORS = 2
+
     meta_subspace = meta_space.META_SUBSPACE_COLLECTION[c.META_SPACE_INDEX]
     experiment_name: str = meta_subspace.derive_experiment_name(c.EXPERIMENT_NAME)
 
@@ -181,26 +183,36 @@ if __name__ == "__main__":
             """
             res = minimize(
                 problem=problem,
-                algorithm=ParallelMOEAD(
-                    # N = n_partitions + 1 (for n_obj == 2)
-                    # Must be greater than n_neighbors
-                    ref_dirs=get_reference_directions(
-                        c.pymoo.MOEAD.SpreadType.DAS_DENNIS,
-                        # n_partitions=10 == 66
-                        n_partitions=c.N_PARTITIONS,  # == 36
-                        # n_partitions=3, # small local tests
-                        n_dim=len(c.OBJECTIVE_SET),
-                        # n_partitions=29,
-                    ),
-                    # Magic number is 20
-                    # n_neighbors=7,
-                    # n_neighbors=15, Used for 66 individuals
-                    n_neighbors=c.N_NEIGHBORS,  # Used for 30-32 individuals
-                    # n_neighbors=2,
-                    decomposition=PBI(theta=10),
-                    sampling=IntegerRandomSampling(),
-                    crossover=SBX(prob=1.0, eta=20, vtype=int),
-                    mutation=PolynomialMutation(prob=1.0, eta=20, vtype=int),
+                algorithm=(
+                    ParallelMOEAD(
+                        # N = n_partitions + 1 (for n_obj == 2)
+                        # Must be greater than n_neighbors
+                        ref_dirs=get_reference_directions(
+                            c.pymoo.MOEAD.SpreadType.DAS_DENNIS,
+                            # n_partitions=10 == 66
+                            n_partitions=c.N_PARTITIONS,  # == 36
+                            # n_partitions=3, # small local tests
+                            n_dim=len(c.OBJECTIVE_SET),
+                            # n_partitions=29,
+                        ),
+                        # Magic number is 20
+                        # n_neighbors=7,
+                        # n_neighbors=15, Used for 66 individuals
+                        n_neighbors=c.N_NEIGHBORS,  # Used for 30-32 individuals
+                        # n_neighbors=2,
+                        decomposition=PBI(theta=10),
+                        sampling=IntegerRandomSampling(),
+                        crossover=SBX(prob=1.0, eta=20, vtype=int),
+                        mutation=PolynomialMutation(prob=1.0, eta=20, vtype=int),
+                    )  #
+                    if len(c.OBJECTIVE_SET) > 1
+                    else GA(
+                        pop_size=c.N_PARTITIONS,
+                        sampling=IntegerRandomSampling(),
+                        crossover=SBX(prob=1.0, eta=20, vtype=int),
+                        mutation=PolynomialMutation(prob=1.0, eta=20, vtype=int),
+                        eliminate_duplicates=True,
+                    )
                 ),
                 termination=termination,
                 copy_algorithm=previous_result is None,
